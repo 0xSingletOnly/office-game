@@ -48,24 +48,26 @@ export class Player {
   
   private createVisuals(): void {
     // Body (suit - blue for Mike)
+    // Capsule height 1.0, so center at 0.5 for bottom to touch ground
     const bodyGeometry = new THREE.CapsuleGeometry(0.3, 1, 4, 8);
     const bodyMaterial = new THREE.MeshStandardMaterial({ 
       color: 0x2c4f7c,  // Suits blue
       roughness: 0.7 
     });
     this.bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    this.bodyMesh.position.y = 1;
+    this.bodyMesh.position.y = 0.5;
     this.bodyMesh.castShadow = true;
     this.mesh.add(this.bodyMesh);
     
     // Head
+    // Position on top of body: 0.5 + 0.5 (half capsule) + 0.25 (head radius) = 1.25
     const headGeometry = new THREE.SphereGeometry(0.25, 16, 16);
     const headMaterial = new THREE.MeshStandardMaterial({ 
       color: 0xffdbac,  // Skin tone
       roughness: 0.5 
     });
     this.headMesh = new THREE.Mesh(headGeometry, headMaterial);
-    this.headMesh.position.y = 1.85;
+    this.headMesh.position.y = 1.25;
     this.headMesh.castShadow = true;
     this.mesh.add(this.headMesh);
     
@@ -76,7 +78,7 @@ export class Player {
       roughness: 0.9 
     });
     const hair = new THREE.Mesh(hairGeometry, hairMaterial);
-    hair.position.y = 2.05;
+    hair.position.y = 1.45;
     hair.position.z = 0.05;
     hair.castShadow = true;
     this.mesh.add(hair);
@@ -88,7 +90,7 @@ export class Player {
       roughness: 0.3 
     });
     const briefcase = new THREE.Mesh(briefcaseGeometry, briefcaseMaterial);
-    briefcase.position.set(0.35, 0.8, 0.2);
+    briefcase.position.set(0.35, 0.75, 0.2);
     briefcase.rotation.z = -0.3;
     briefcase.castShadow = true;
     this.mesh.add(briefcase);
@@ -176,6 +178,9 @@ export class Player {
       // No collision system - apply movement directly
       this.mesh.position.copy(desiredPos);
     }
+    
+    // Ensure player stays on the ground (y=0)
+    this.mesh.position.y = 0;
     
     // Rotate player to face movement direction (or camera direction if not moving)
     if (this.velocity.length() > 0.1) {

@@ -210,8 +210,8 @@ export class LouisAI {
     // Add to scene
     game.getScene()?.add(this.mesh);
     
-    // Initial position
-    this.mesh.position.set(-5, 1, -5);
+    // Initial position (y=0 so feet touch ground, body parts positioned relative to this)
+    this.mesh.position.set(-5, 0, -5);
     
     // Start patrolling
     this.stateMachine.setCurrentState('PATROL');
@@ -219,24 +219,26 @@ export class LouisAI {
   
   private createVisuals(): void {
     // Body (suit - darker for Louis)
+    // Capsule height 0.9, so center at 0.45 for bottom to touch ground
     const bodyGeometry = new THREE.CapsuleGeometry(0.3, 0.9, 4, 8);
     const bodyMaterial = new THREE.MeshStandardMaterial({ 
       color: 0x1a1a1a,  // Black suit
       roughness: 0.7 
     });
     this.bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    this.bodyMesh.position.y = 1;
+    this.bodyMesh.position.y = 0.45;
     this.bodyMesh.castShadow = true;
     this.mesh.add(this.bodyMesh);
     
     // Head (Louis is shorter than Mike)
+    // Position on top of body: 0.45 + 0.45 (half capsule) + 0.23 (head radius) = 1.13
     const headGeometry = new THREE.SphereGeometry(0.23, 16, 16);
     const headMaterial = new THREE.MeshStandardMaterial({ 
       color: 0xffdbac,
       roughness: 0.5 
     });
     const head = new THREE.Mesh(headGeometry, headMaterial);
-    head.position.y = 1.75;
+    head.position.y = 1.13;
     head.castShadow = true;
     this.mesh.add(head);
     
@@ -247,7 +249,7 @@ export class LouisAI {
       roughness: 0.9 
     });
     const hair = new THREE.Mesh(hairGeometry, hairMaterial);
-    hair.position.y = 1.95;
+    hair.position.y = 1.33;
     hair.position.z = 0.02;
     this.mesh.add(hair);
     
@@ -258,7 +260,7 @@ export class LouisAI {
       roughness: 0.6 
     });
     const folder = new THREE.Mesh(folderGeometry, folderMaterial);
-    folder.position.set(0.35, 1.2, 0.2);
+    folder.position.set(0.35, 0.65, 0.2);
     folder.rotation.z = 0.2;
     folder.rotation.y = -0.3;
     folder.castShadow = true;
@@ -269,15 +271,15 @@ export class LouisAI {
   }
   
   private setupPatrolPoints(): void {
-    // Define patrol waypoints around the office
+    // Define patrol waypoints around the office (y=0 for ground level)
     this.patrolPoints = [
-      new THREE.Vector3(-5, 1, -5),   // Louis's office area
-      new THREE.Vector3(0, 1, -5),    // Hallway
-      new THREE.Vector3(5, 1, -5),    // Harvey's office area
-      new THREE.Vector3(5, 1, 0),     // Center
-      new THREE.Vector3(0, 1, 5),     // Conference area
-      new THREE.Vector3(-5, 1, 5),    // Library area
-      new THREE.Vector3(-10, 1, 0),   // Cubicles
+      new THREE.Vector3(-5, 0, -5),   // Louis's office area
+      new THREE.Vector3(0, 0, -5),    // Hallway
+      new THREE.Vector3(5, 0, -5),    // Harvey's office area
+      new THREE.Vector3(5, 0, 0),     // Center
+      new THREE.Vector3(0, 0, 5),     // Conference area
+      new THREE.Vector3(-5, 0, 5),    // Library area
+      new THREE.Vector3(-10, 0, 0),   // Cubicles
     ];
   }
   
@@ -350,6 +352,9 @@ export class LouisAI {
       // No collision system - apply movement directly
       this.mesh.position.copy(desiredPos);
     }
+    
+    // Ensure Louis stays on the ground (y=0)
+    this.mesh.position.y = 0;
   }
   
   lookAt(target: THREE.Vector3): void {
