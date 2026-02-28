@@ -323,7 +323,33 @@ export class LouisAI {
     direction.y = 0; // Stay on ground
     
     this.currentVelocity.lerp(direction.multiplyScalar(this.speed), 10 * deltaTime);
-    this.mesh.position.addScaledVector(this.currentVelocity, deltaTime);
+    
+    // Calculate desired position
+    const currentPos = this.mesh.position.clone();
+    const desiredPos = currentPos.clone().addScaledVector(this.currentVelocity, deltaTime);
+    
+    // Apply collision resolution
+    const collisionSystem = this.game.collisionSystem;
+    if (collisionSystem) {
+      const resolvedPos = collisionSystem.resolvePlayerCollision(
+        currentPos,
+        desiredPos,
+        0.3 // Louis radius (same as player)
+      );
+      
+      // Update velocity based on actual movement
+      if (Math.abs(desiredPos.x - currentPos.x) > 0.001 && Math.abs(resolvedPos.x - currentPos.x) < 0.001) {
+        this.currentVelocity.x = 0;
+      }
+      if (Math.abs(desiredPos.z - currentPos.z) > 0.001 && Math.abs(resolvedPos.z - currentPos.z) < 0.001) {
+        this.currentVelocity.z = 0;
+      }
+      
+      this.mesh.position.copy(resolvedPos);
+    } else {
+      // No collision system - apply movement directly
+      this.mesh.position.copy(desiredPos);
+    }
   }
   
   lookAt(target: THREE.Vector3): void {

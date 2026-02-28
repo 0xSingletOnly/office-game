@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { InputManager } from './InputManager.js';
 import { CameraController } from './CameraController.js';
+import { CollisionSystem } from './CollisionSystem.js';
 import { Player } from '../entities/Player.js';
 import { OfficeMap } from '../entities/OfficeMap.js';
 import { LouisAI } from '../entities/LouisAI.js';
@@ -17,6 +18,7 @@ export class Game {
   // Game systems
   public inputManager: InputManager | null = null;
   public cameraController: CameraController | null = null;
+  public collisionSystem: CollisionSystem | null = null;
   
   // Game entities
   public player: Player | null = null;
@@ -69,22 +71,24 @@ export class Game {
     // Initialize game systems
     this.inputManager = new InputManager();
     this.cameraController = new CameraController();
+    this.collisionSystem = new CollisionSystem();
     
     // Initialize UI
     this.hud = new HUD();
     
-    // Initialize entities
-    this.officeMap = new OfficeMap(this.scene, this);
+    // Initialize office map with collision system
+    this.officeMap = new OfficeMap(this.scene, this, this.collisionSystem);
+    this.officeMap.build();
+    
+    // Initialize entities (after map is built so collision system is populated)
     this.player = new Player(this);
+    this.player.setCollisionSystem(this.collisionSystem);
     this.louis = new LouisAI(this);
     
     // Setup camera to follow player
     if (this.cameraController && this.player) {
       this.cameraController.setTarget(this.player.getMesh());
     }
-    
-    // Build the office environment with interactive objects
-    this.officeMap.build();
     
     // Setup interactive objects
     this.setupInteractiveObjects();

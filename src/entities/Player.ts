@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { Game } from '../core/Game.js';
+import { CollisionSystem } from '../core/CollisionSystem.js';
 
 export class Player {
   private game: Game;
   private mesh: THREE.Group;
   private velocity: THREE.Vector3 = new THREE.Vector3();
+  private collisionSystem: CollisionSystem | null = null;
   
   // Movement constants
   private readonly WALK_SPEED = 5;
@@ -12,6 +14,9 @@ export class Player {
   private readonly CROUCH_SPEED = 2.5;
   private readonly ACCELERATION = 20;
   private readonly FRICTION = 10;
+  
+  // Collision
+  private readonly PLAYER_RADIUS = 0.3;
   
   // State
   private isSprinting: boolean = false;
@@ -34,7 +39,11 @@ export class Player {
     game.getScene()?.add(this.mesh);
     
     // Initial position
-    this.mesh.position.set(0, 1, 0);
+    this.mesh.position.set(0, 0, 0);
+  }
+  
+  public setCollisionSystem(collisionSystem: CollisionSystem): void {
+    this.collisionSystem = collisionSystem;
   }
   
   private createVisuals(): void {
@@ -141,8 +150,32 @@ export class Player {
     
     this.velocity.lerp(targetVelocity, Math.min(1, acceleration * deltaTime));
     
-    // Apply movement
-    this.mesh.position.addScaledVector(this.velocity, deltaTime);
+    // Calculate desired position
+    const currentPos = this.mesh.position.clone();
+    const desiredPos = currentPos.clone().addScaledVector(this.velocity, deltaTime);
+    
+    // Apply collision resolution if collision system is available
+    if (this.collisionSystem) {
+      const resolvedPos = this.collisionSystem.resolvePlayerCollision(
+        currentPos, 
+        desiredPos, 
+        this.PLAYER_RADIUS
+      );
+      
+      // If we're not moving in the direction we want, zero out that component of velocity
+      // This prevents "running into walls" maintaining velocity
+      if (Math.abs(desiredPos.x - currentPos.x) > 0.001 && Math.abs(resolvedPos.x - currentPos.x) < 0.001) {
+        this.velocity.x = 0;
+      }
+      if (Math.abs(desiredPos.z - currentPos.z) > 0.001 && Math.abs(resolvedPos.z - currentPos.z) < 0.001) {
+        this.velocity.z = 0;
+      }
+      
+      this.mesh.position.copy(resolvedPos);
+    } else {
+      // No collision system - apply movement directly
+      this.mesh.position.copy(desiredPos);
+    }
     
     // Rotate player to face movement direction (or camera direction if not moving)
     if (this.velocity.length() > 0.1) {

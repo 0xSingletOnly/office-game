@@ -4,6 +4,7 @@ import { InteractiveObject } from './InteractiveObject.js';
 import { HidingSpot, HidingSpotType } from './HidingSpot.js';
 import { Door, DoorType } from './Door.js';
 import { DistractionObject, DistractionType } from './DistractionObject.js';
+import { CollisionSystem } from '../core/CollisionSystem.js';
 
 /**
  * OfficeMap - Procedurally builds the Pearson Hardman office environment
@@ -14,6 +15,7 @@ export class OfficeMap {
   private walls: THREE.Mesh[] = [];
   private floor: THREE.Mesh | null = null;
   private interactiveObjects: InteractiveObject[] = [];
+  private furniture: THREE.Group[] = [];
   
   // Materials
   private floorMaterial: THREE.MeshStandardMaterial;
@@ -22,10 +24,14 @@ export class OfficeMap {
   
   // Reference to game (for creating interactive objects)
   private game: Game | null = null;
+  
+  // Collision system
+  private collisionSystem: CollisionSystem;
 
-  constructor(scene: THREE.Scene, game?: Game) {
+  constructor(scene: THREE.Scene, game?: Game, collisionSystem?: CollisionSystem) {
     this.scene = scene;
     this.game = game || null;
+    this.collisionSystem = collisionSystem || new CollisionSystem();
     
     // Initialize materials
     this.floorMaterial = new THREE.MeshStandardMaterial({
@@ -222,6 +228,9 @@ export class OfficeMap {
     wall.receiveShadow = true;
     this.scene.add(wall);
     this.walls.push(wall);
+    
+    // Register with collision system
+    this.collisionSystem.addMesh(wall);
   }
   
   private createFurniture(): void {
@@ -303,6 +312,11 @@ export class OfficeMap {
     group.add(screen);
     
     this.scene.add(group);
+    this.furniture.push(group);
+    
+    // Register with collision system (simplified box around desk)
+    // Desk collision box: width=2, height=1, depth=1
+    this.collisionSystem.addBoxCollider(2, 1, 1, x, 0, z);
   }
   
   private createConferenceTable(x: number, z: number, rotation: number): void {
@@ -349,6 +363,10 @@ export class OfficeMap {
     }
     
     this.scene.add(group);
+    this.furniture.push(group);
+    
+    // Register with collision system (table: 4x1x2)
+    this.collisionSystem.addBoxCollider(4, 1, 2, x, 0, z);
   }
   
   private createBookshelf(x: number, z: number, rotation: number): void {
@@ -387,6 +405,10 @@ export class OfficeMap {
     }
     
     this.scene.add(group);
+    this.furniture.push(group);
+    
+    // Register with collision system (bookshelf: 3x3x0.5)
+    this.collisionSystem.addBoxCollider(3, 3, 0.5, x, 0, z);
   }
   
   private createCopyMachine(x: number, z: number): void {
@@ -426,6 +448,10 @@ export class OfficeMap {
     group.add(panel);
     
     this.scene.add(group);
+    this.furniture.push(group);
+    
+    // Register with collision system (copy machine: 1.2x1.5x1.5)
+    this.collisionSystem.addBoxCollider(1.2, 1.5, 1.5, x, 0, z);
   }
   
   private createDecorations(): void {
@@ -479,5 +505,9 @@ export class OfficeMap {
   
   public getInteractiveObjects(): InteractiveObject[] {
     return this.interactiveObjects;
+  }
+  
+  public getCollisionSystem(): CollisionSystem {
+    return this.collisionSystem;
   }
 }
