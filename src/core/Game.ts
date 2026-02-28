@@ -258,6 +258,20 @@ export class Game {
   }
   
   /**
+   * Show warning that hiding time is running out
+   */
+  showHidingWarning(secondsLeft: number): void {
+    this.hud?.showHidingWarning(secondsLeft);
+  }
+  
+  /**
+   * Show a notification message
+   */
+  showNotification(message: string): void {
+    this.hud?.showNotification(message);
+  }
+  
+  /**
    * Alert Louis to investigate a noise/distraction
    */
   public alertLouis(position: THREE.Vector3, _radius: number, _duration: number): void {

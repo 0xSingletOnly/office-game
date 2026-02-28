@@ -24,6 +24,8 @@ export class HUD {
   
   // Hidden indicator
   private hiddenIndicator!: HTMLElement;
+  private hidingWarning!: HTMLElement;
+  private notificationContainer!: HTMLElement;
   
   private gameOverScreen: HTMLElement | null = null;
   private winScreen: HTMLElement | null = null;
@@ -218,6 +220,39 @@ export class HUD {
     `;
     this.container.appendChild(this.hiddenIndicator);
     
+    // Hiding time warning (below hidden indicator)
+    this.hidingWarning = document.createElement('div');
+    this.hidingWarning.style.cssText = `
+      position: absolute;
+      top: 42%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff8800;
+      font-size: 24px;
+      font-weight: bold;
+      text-shadow: 0 0 10px #ff0000;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      text-align: center;
+    `;
+    this.container.appendChild(this.hidingWarning);
+    
+    // Notification container (top center, below detection)
+    this.notificationContainer = document.createElement('div');
+    this.notificationContainer.style.cssText = `
+      position: absolute;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 100;
+    `;
+    this.container.appendChild(this.notificationContainer);
+    
     // Create game over screens
     this.createGameOverScreens();
   }
@@ -373,6 +408,78 @@ export class HUD {
   
   showHiddenIndicator(show: boolean): void {
     this.hiddenIndicator.style.opacity = show ? '1' : '0';
+    if (!show) {
+      // Hide warning when no longer hidden
+      this.hidingWarning.style.opacity = '0';
+    }
+  }
+  
+  /**
+   * Show warning that hiding time is running out
+   */
+  showHidingWarning(secondsLeft: number): void {
+    this.hidingWarning.textContent = `⚠️ GET OUT! ${secondsLeft.toFixed(1)}s left!`;
+    this.hidingWarning.style.opacity = '1';
+    
+    // Pulse animation
+    let pulseCount = 0;
+    const pulse = setInterval(() => {
+      pulseCount++;
+      this.hidingWarning.style.transform = pulseCount % 2 === 0 
+        ? 'translate(-50%, -50%) scale(1.1)' 
+        : 'translate(-50%, -50%) scale(1)';
+      
+      if (pulseCount >= 6) {
+        clearInterval(pulse);
+        this.hidingWarning.style.transform = 'translate(-50%, -50%) scale(1)';
+      }
+    }, 300);
+  }
+  
+  /**
+   * Show a notification message
+   */
+  showNotification(message: string, duration: number = 3000): void {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      background: rgba(0, 0, 0, 0.8);
+      color: #c9a227;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      border: 2px solid #c9a227;
+      box-shadow: 0 0 20px rgba(201, 162, 39, 0.5);
+      animation: slideDown 0.3s ease-out;
+    `;
+    notification.textContent = message;
+    
+    // Add keyframes for animation
+    if (!document.getElementById('notification-styles')) {
+      const style = document.createElement('style');
+      style.id = 'notification-styles';
+      style.textContent = `
+        @keyframes slideDown {
+          from { transform: translateY(-20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+    
+    this.notificationContainer.appendChild(notification);
+    
+    // Remove after duration
+    setTimeout(() => {
+      notification.style.animation = 'fadeOut 0.3s ease-out';
+      setTimeout(() => {
+        notification.remove();
+      }, 300);
+    }, duration);
   }
   
   // Update methods

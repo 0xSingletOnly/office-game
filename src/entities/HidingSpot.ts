@@ -23,8 +23,13 @@ export class HidingSpot extends InteractiveObject {
   
   // Hiding properties
   private readonly HIDE_TIME: number = 0.5; // Seconds to hide/unhide
+  private readonly MAX_HIDE_TIME: number = 10; // Maximum time allowed in hiding spot
+  private readonly WARNING_TIME: number = 3; // Show warning when this many seconds left
   private transitionTimer: number = 0;
   private isTransitioning: boolean = false;
+  private hideTimer: number = 0; // Time spent hiding
+  private isWarningShown: boolean = false;
+  private hasBeenUsed: boolean = false; // Track if spot has been used
 
   constructor(game: Game, position: THREE.Vector3, type: HidingSpotType) {
     // Create base mesh
@@ -38,10 +43,7 @@ export class HidingSpot extends InteractiveObject {
     this.createVisuals();
     
     // Set prompt
-    this.prompt = {
-      text: this.isOccupied ? 'Exit' : 'Hide',
-      key: 'E'
-    };
+    this.updatePrompt();
   }
 
   private createVisuals(): void {
@@ -230,6 +232,13 @@ export class HidingSpot extends InteractiveObject {
   interact(): void {
     if (this.isTransitioning) return;
     
+    // Check if spot has already been used
+    if (!this.isOccupied && this.hasBeenUsed) {
+      console.log(`🚫 Cannot hide in ${this.type} - already used!`);
+      this.game.showNotification('You cannot hide here again!');
+      return;
+    }
+    
     if (!this.isOccupied) {
       this.hidePlayer();
     } else if (this.occupant === 'player') {
@@ -241,11 +250,13 @@ export class HidingSpot extends InteractiveObject {
     const player = this.game.player;
     if (!player) return;
     
-    console.log(`🚪 Player is hiding in ${this.type}!`);
+    console.log(`🚪 Player is hiding in ${this.type}! (10 second limit)`);
     
     this.isOccupied = true;
     this.occupant = 'player';
     this.isTransitioning = true;
+    this.hideTimer = 0; // Reset hide timer
+    this.isWarningShown = false;
     
     // Hide player from AI detection
     
@@ -260,7 +271,7 @@ export class HidingSpot extends InteractiveObject {
     this.animateDoor(true);
     
     // Update prompt
-    this.prompt.text = 'Exit';
+    this.updatePrompt();
     
     // Start transition timer
     this.transitionTimer = 0;
@@ -268,17 +279,22 @@ export class HidingSpot extends InteractiveObject {
     // Show "HIDDEN" UI
     this.game.setHiddenState(true);
     
+    // Mark as used
+    this.hasBeenUsed = true;
+    
     setTimeout(() => {
       this.isTransitioning = false;
     }, this.HIDE_TIME * 1000);
   }
 
   private unhidePlayer(): void {
-    console.log(`🚪 Player exited hiding spot!`);
+    console.log(`🚪 Player exited hiding spot! (was hidden for ${this.hideTimer.toFixed(1)}s)`);
     
     this.isOccupied = false;
     this.occupant = null;
     this.isTransitioning = true;
+    this.hideTimer = 0; // Reset timer
+    this.isWarningShown = false;
     
     // Show player mesh
     if (this.game.player) {
@@ -293,7 +309,7 @@ export class HidingSpot extends InteractiveObject {
     this.game.player?.setPosition(exitPosition.x, exitPosition.y, exitPosition.z);
     
     // Update prompt
-    this.prompt.text = 'Hide';
+    this.updatePrompt();
     
     // Hide "HIDDEN" UI
     this.game.setHiddenState(false);
@@ -341,6 +357,33 @@ export class HidingSpot extends InteractiveObject {
   getType(): HidingSpotType {
     return this.type;
   }
+  
+  /**
+   * Check if this hiding spot has been used before
+   */
+  isUsed(): boolean {
+    return this.hasBeenUsed;
+  }
+  
+  /**
+   * Reset the used state (for game restart)
+   */
+  resetUsedState(): void {
+    this.hasBeenUsed = false;
+  }
+  
+  /**
+   * Update the interaction prompt based on state
+   */
+  private updatePrompt(): void {
+    if (this.isOccupied && this.occupant === 'player') {
+      this.prompt = { text: 'Exit', key: 'E' };
+    } else if (this.hasBeenUsed) {
+      this.prompt = { text: 'Used', key: 'X' };
+    } else {
+      this.prompt = { text: 'Hide', key: 'E' };
+    }
+  }
 
   update(deltaTime: number): void {
     super.update(deltaTime);
@@ -349,5 +392,39 @@ export class HidingSpot extends InteractiveObject {
     if (this.isTransitioning) {
       this.transitionTimer += deltaTime;
     }
+    
+    // Update hide timer if player is hidden
+    if (this.isOccupied && this.occupant === 'player') {
+      this.hideTimer += deltaTime;
+      
+      // Show warning when time is running low
+      const timeRemaining = this.MAX_HIDE_TIME - this.hideTimer;
+      if (timeRemaining <= this.WARNING_TIME && timeRemaining > 0 && !this.isWarningShown) {
+        this.showTimeWarning(timeRemaining);
+        this.isWarningShown = true;
+      }
+      
+      // Force exit when time is up
+      if (this.hideTimer >= this.MAX_HIDE_TIME) {
+        console.log('⏰ Hide time expired! Forcing exit...');
+        this.forceExit();
+      }
+    }
+  }
+  
+  /**
+   * Show warning that hide time is running out
+   */
+  private showTimeWarning(secondsLeft: number): void {
+    console.log(`⚠️ Hiding time running out! ${secondsLeft.toFixed(1)}s remaining!`);
+    this.game.showHidingWarning(secondsLeft);
+  }
+  
+  /**
+   * Force player to exit hiding spot (time limit reached)
+   */
+  private forceExit(): void {
+    this.unhidePlayer();
+    this.game.showNotification('You were forced out! Hide time expired.');
   }
 }
