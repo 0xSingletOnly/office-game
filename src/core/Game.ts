@@ -3,6 +3,8 @@ import { InputManager } from './InputManager.js';
 import { CameraController } from './CameraController.js';
 import { Player } from '../entities/Player.js';
 import { OfficeMap } from '../entities/OfficeMap.js';
+import { LouisAI } from '../entities/LouisAI.js';
+import { HUD } from '../ui/HUD.js';
 
 export class Game {
   private container: HTMLElement | null = null;
@@ -17,6 +19,14 @@ export class Game {
   // Game entities
   public player: Player | null = null;
   public officeMap: OfficeMap | null = null;
+  public louis: LouisAI | null = null;
+  
+  // UI
+  public hud: HUD | null = null;
+  
+  // Game state
+  private gameTime: number = 180; // 3 minutes in seconds
+  private isGameOver: boolean = false;
   
   // Game state
   private isRunning: boolean = false;
@@ -55,9 +65,13 @@ export class Game {
     this.inputManager = new InputManager();
     this.cameraController = new CameraController();
     
+    // Initialize UI
+    this.hud = new HUD();
+    
     // Initialize entities
     this.officeMap = new OfficeMap(this.scene);
     this.player = new Player(this);
+    this.louis = new LouisAI(this);
     
     // Setup camera to follow player
     if (this.cameraController && this.player) {
@@ -128,14 +142,62 @@ export class Game {
   }
   
   private update(deltaTime: number): void {
+    if (this.isGameOver) return;
+    
+    // Update game timer
+    this.gameTime -= deltaTime;
+    if (this.gameTime <= 0) {
+      this.onWin();
+      return;
+    }
+    
     // Update input
     this.inputManager?.update();
     
     // Update player
     this.player?.update(deltaTime);
     
+    // Update Louis AI
+    this.louis?.update(deltaTime);
+    
     // Update camera
     this.cameraController?.update(deltaTime);
+    
+    // Update HUD
+    this.updateHUD();
+  }
+  
+  private updateHUD(): void {
+    if (!this.hud) return;
+    
+    // Update timer
+    this.hud.setTimer(this.gameTime);
+    
+    // Update stamina
+    if (this.player) {
+      this.hud.setStamina(this.player.getStamina());
+    }
+    
+    // Update Louis state
+    if (this.louis) {
+      this.hud.setLouisState(this.louis.getState() || 'UNKNOWN');
+    }
+  }
+  
+  public updateDetection(level: number): void {
+    this.hud?.setDetectionLevel(level);
+  }
+  
+  public onPlayerCaught(): void {
+    this.isGameOver = true;
+    this.hud?.showGameOver();
+    this.stop();
+  }
+  
+  private onWin(): void {
+    this.isGameOver = true;
+    this.hud?.showWin();
+    this.stop();
   }
   
   private render(): void {
