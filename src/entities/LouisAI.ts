@@ -432,6 +432,22 @@ export class LouisAI {
     this.game.onPlayerCaught();
   }
   
+  /**
+   * Investigate a noise/distraction
+   */
+  investigateNoise(position: THREE.Vector3): void {
+    console.log(`🤔 Louis is investigating noise at (${position.x.toFixed(1)}, ${position.z.toFixed(1)})`);
+    
+    // Store as last known position
+    this.lastKnownPlayerPosition.copy(position);
+    
+    // Switch to search state if not already chasing
+    const currentState = this.stateMachine.getCurrentStateName();
+    if (currentState !== 'CHASE' && currentState !== 'CAUGHT') {
+      this.stateMachine.setCurrentState('SEARCH');
+    }
+  }
+  
   // Getters
   getStateMachine(): StateMachine<LouisAI> {
     return this.stateMachine;

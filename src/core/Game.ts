@@ -5,6 +5,7 @@ import { Player } from '../entities/Player.js';
 import { OfficeMap } from '../entities/OfficeMap.js';
 import { LouisAI } from '../entities/LouisAI.js';
 import { HUD } from '../ui/HUD.js';
+import { InteractiveObject } from '../entities/InteractiveObject.js';
 
 export class Game {
   private container: HTMLElement | null = null;
@@ -27,9 +28,10 @@ export class Game {
   // Game state
   private gameTime: number = 180; // 3 minutes in seconds
   private isGameOver: boolean = false;
-  
-  // Game state
   private isRunning: boolean = false;
+  
+  // Interactive objects
+  private interactiveObjects: InteractiveObject[] = [];
   private animationFrameId: number = 0;
   
   // UI elements
@@ -69,7 +71,7 @@ export class Game {
     this.hud = new HUD();
     
     // Initialize entities
-    this.officeMap = new OfficeMap(this.scene);
+    this.officeMap = new OfficeMap(this.scene, this);
     this.player = new Player(this);
     this.louis = new LouisAI(this);
     
@@ -78,8 +80,11 @@ export class Game {
       this.cameraController.setTarget(this.player.getMesh());
     }
     
-    // Build the office environment
+    // Build the office environment with interactive objects
     this.officeMap.build();
+    
+    // Setup interactive objects
+    this.setupInteractiveObjects();
     
     // Setup event listeners
     this.setupEventListeners();
@@ -160,11 +165,64 @@ export class Game {
     // Update Louis AI
     this.louis?.update(deltaTime);
     
+    // Update interactive objects
+    this.interactiveObjects.forEach(obj => obj.update(deltaTime));
+    
+    // Handle interactions
+    this.handleInteractions();
+    
     // Update camera
     this.cameraController?.update(deltaTime);
     
     // Update HUD
     this.updateHUD();
+  }
+  
+  private setupInteractiveObjects(): void {
+    // Get interactive objects from OfficeMap
+    this.interactiveObjects = this.officeMap?.getInteractiveObjects() || [];
+    console.log(`🎮 Created ${this.interactiveObjects.length} interactive objects`);
+  }
+  
+  private handleInteractions(): void {
+    if (!this.player) return;
+    
+    const playerPos = this.player.getPosition();
+    let nearestObject: InteractiveObject | null = null;
+    let nearestDist = Infinity;
+    
+    // Find nearest interactable object
+    for (const obj of this.interactiveObjects) {
+      if (obj.canInteract(playerPos)) {
+        const dist = obj.getPosition().distanceTo(playerPos);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestObject = obj;
+        }
+      }
+    }
+    
+    // Handle E key press for interaction
+    if (this.inputManager?.isInteracting() && nearestObject) {
+      nearestObject.interact();
+      
+      // Track held objects (for throwing)
+      // Note: This is simplified - in production, you'd check object type
+    }
+  }
+  
+  /**
+   * Alert Louis to investigate a noise/distraction
+   */
+  public alertLouis(position: THREE.Vector3, _radius: number, _duration: number): void {
+    console.log(`🔔 Alerting Louis to noise at (${position.x.toFixed(1)}, ${position.z.toFixed(1)})`);
+    
+    // If Louis is not chasing, make him investigate
+    const louisState = this.louis?.getState();
+    if (louisState && !['CHASE', 'CAUGHT'].includes(louisState)) {
+      // Set Louis's investigation target
+      this.louis?.investigateNoise(position);
+    }
   }
   
   private updateHUD(): void {
@@ -230,5 +288,9 @@ export class Game {
     this.stop();
     this.renderer?.dispose();
     this.inputManager?.dispose();
+    
+    // Clean up interactive objects
+    this.interactiveObjects.forEach(obj => obj.dispose());
+    this.interactiveObjects = [];
   }
 }

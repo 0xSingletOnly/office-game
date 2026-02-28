@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+import { Game } from '../core/Game.js';
+import { InteractiveObject } from './InteractiveObject.js';
+import { HidingSpot, HidingSpotType } from './HidingSpot.js';
+import { Door, DoorType } from './Door.js';
+import { DistractionObject, DistractionType } from './DistractionObject.js';
 
 /**
  * OfficeMap - Procedurally builds the Pearson Hardman office environment
@@ -8,14 +13,19 @@ export class OfficeMap {
   private scene: THREE.Scene;
   private walls: THREE.Mesh[] = [];
   private floor: THREE.Mesh | null = null;
+  private interactiveObjects: InteractiveObject[] = [];
   
   // Materials
   private floorMaterial: THREE.MeshStandardMaterial;
   private wallMaterial: THREE.MeshStandardMaterial;
   private furnitureMaterial: THREE.MeshStandardMaterial;
+  
+  // Reference to game (for creating interactive objects)
+  private game: Game | null = null;
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, game?: Game) {
     this.scene = scene;
+    this.game = game || null;
     
     // Initialize materials
     this.floorMaterial = new THREE.MeshStandardMaterial({
@@ -41,8 +51,83 @@ export class OfficeMap {
     this.createWalls();
     this.createFurniture();
     this.createDecorations();
+    this.createInteractiveObjects();
     
     console.log('🏢 Office environment built!');
+  }
+  
+  private createInteractiveObjects(): void {
+    if (!this.game) return;
+    
+    // Create bathroom stalls (classic hiding spot!)
+    this.interactiveObjects.push(
+      new HidingSpot(this.game, new THREE.Vector3(-12, 0, -12), HidingSpotType.BATHROOM_STALL)
+    );
+    this.interactiveObjects.push(
+      new HidingSpot(this.game, new THREE.Vector3(-10, 0, -12), HidingSpotType.BATHROOM_STALL)
+    );
+    this.interactiveObjects.push(
+      new HidingSpot(this.game, new THREE.Vector3(-8, 0, -12), HidingSpotType.BATHROOM_STALL)
+    );
+    
+    // Supply closet
+    this.interactiveObjects.push(
+      new HidingSpot(this.game, new THREE.Vector3(15, 0, -15), HidingSpotType.CLOSET)
+    );
+    
+    // Locker (in employee area)
+    this.interactiveObjects.push(
+      new HidingSpot(this.game, new THREE.Vector3(-15, 0, 5), HidingSpotType.LOCKER)
+    );
+    
+    // Doors
+    // Main office door
+    this.interactiveObjects.push(
+      new Door(this.game, new THREE.Vector3(0, 0, -18), 0, DoorType.GLASS)
+    );
+    
+    // Conference room doors
+    this.interactiveObjects.push(
+      new Door(this.game, new THREE.Vector3(8, 0, 5), -Math.PI / 2, DoorType.GLASS)
+    );
+    
+    // Storage room door
+    this.interactiveObjects.push(
+      new Door(this.game, new THREE.Vector3(15, 0, -10), Math.PI / 2, DoorType.STANDARD)
+    );
+    
+    // Distraction objects - Coffee cups
+    this.interactiveObjects.push(
+      new DistractionObject(this.game, new THREE.Vector3(5, 0.1, 5), DistractionType.COFFEE_CUP)
+    );
+    this.interactiveObjects.push(
+      new DistractionObject(this.game, new THREE.Vector3(-5, 0.1, 5), DistractionType.COFFEE_CUP)
+    );
+    
+    // Books in library
+    this.interactiveObjects.push(
+      new DistractionObject(this.game, new THREE.Vector3(-15, 0.1, -15), DistractionType.BOOK)
+    );
+    this.interactiveObjects.push(
+      new DistractionObject(this.game, new THREE.Vector3(-13, 0.1, -15), DistractionType.BOOK)
+    );
+    
+    // Phone on desk
+    this.interactiveObjects.push(
+      new DistractionObject(this.game, new THREE.Vector3(5, 1.05, -5), DistractionType.PHONE)
+    );
+    
+    // Papers (copy room)
+    this.interactiveObjects.push(
+      new DistractionObject(this.game, new THREE.Vector3(15, 0.05, -15), DistractionType.PAPERS)
+    );
+    
+    // Stapler
+    this.interactiveObjects.push(
+      new DistractionObject(this.game, new THREE.Vector3(-5, 1.05, 5), DistractionType.STAPLER)
+    );
+    
+    console.log(`🎯 Created ${this.interactiveObjects.length} interactive objects`);
   }
   
   private createLighting(): void {
@@ -140,6 +225,8 @@ export class OfficeMap {
   }
   
   private createFurniture(): void {
+    if (!this.game) return;
+    
     // Desks scattered around
     const deskPositions = [
       { x: -5, z: 5, rotation: 0 },
@@ -388,5 +475,9 @@ export class OfficeMap {
   
   public getWalls(): THREE.Mesh[] {
     return this.walls;
+  }
+  
+  public getInteractiveObjects(): InteractiveObject[] {
+    return this.interactiveObjects;
   }
 }
