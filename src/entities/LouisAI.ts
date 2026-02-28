@@ -3,6 +3,16 @@ import { Game } from '../core/Game.js';
 import { StateMachine, State } from '../ai/StateMachine.js';
 import { VisionCone } from '../ai/VisionCone.js';
 
+/**
+ * SuspicionSample - Tracks a suspicion reading with position and direction
+ */
+interface SuspicionSample {
+  position: THREE.Vector3;
+  direction: THREE.Vector3;
+  level: number;
+  timestamp: number;
+}
+
 // Louis AI States
 const PATROL_STATE: State<LouisAI> = {
   name: 'PATROL',
@@ -10,20 +20,25 @@ const PATROL_STATE: State<LouisAI> = {
   enter(louis: LouisAI): void {
     louis.setSpeed(louis.WALK_SPEED);
     louis.sayQuote('patrol');
-    void louis;
+    louis.clearSuspicionHistory();
   },
   
   execute(louis: LouisAI, deltaTime: number): void {
-    // Move along patrol path
-    louis.patrol(deltaTime);
-    
-    // Check for player
+    // Check for player FIRST before moving - immediate response!
     const detectionLevel = louis.checkForPlayer();
+    
     if (detectionLevel > 0.9) {
+      // Player spotted! Chase immediately
       louis.getStateMachine().setCurrentState('CHASE');
+      return;
     } else if (detectionLevel > 0.3) {
+      // Something suspicious detected
       louis.getStateMachine().setCurrentState('SUSPICIOUS');
+      return;
     }
+    
+    // No player detected - continue patrol
+    louis.patrol(deltaTime);
   },
   
   exit(_louis: LouisAI): void {
@@ -36,37 +51,79 @@ const SUSPICIOUS_STATE: State<LouisAI> = {
   name: 'SUSPICIOUS',
   
   enter(louis: LouisAI): void {
-    louis.setSpeed(0); // Stop and look
+    louis.setSpeed(louis.WALK_SPEED * 0.6); // Slow, cautious movement
     louis.sayQuote('suspicious');
     louis.suspicionTimer = 0;
+    louis.stuckTimer = 0;
+    louis.lastPosition.copy(louis.getPosition());
+    // Calculate and store investigation target
+    louis.calculateInvestigationTarget();
   },
   
   execute(louis: LouisAI, deltaTime: number): void {
     louis.suspicionTimer += deltaTime;
     
-    // Look at player
-    const playerPos = louis.getPlayerPosition();
-    if (playerPos) {
-      louis.lookAt(playerPos);
-    }
-    
-    // Check for player
+    // Update suspicion tracking
     const detectionLevel = louis.checkForPlayer();
+    louis.updateSuspicionHistory(detectionLevel);
+    
+    // IMMEDIATE: If player is right in front (high detection), CHASE!
     if (detectionLevel > 0.9) {
       louis.getStateMachine().setCurrentState('CHASE');
-    } else if (detectionLevel < 0.1 && louis.suspicionTimer > 2) {
-      // Lost interest, go back to patrol
-      louis.getStateMachine().setCurrentState('PATROL');
+      return;
     }
     
-    // Too suspicious for too long = chase
-    if (louis.suspicionTimer > 4) {
+    // If player disappeared for a while, go back to patrol
+    if (detectionLevel < 0.05 && louis.suspicionTimer > 2.0) {
+      louis.getStateMachine().setCurrentState('PATROL');
+      return;
+    }
+    
+    // Recalculate target if getting more suspicious
+    if (louis.isSuspicionIncreasing()) {
+      louis.calculateInvestigationTarget();
+      louis.stuckTimer = 0; // Reset stuck timer when target updates
+    }
+    
+    // Move toward investigation target (direction of suspicion)
+    const target = louis.getInvestigationTarget();
+    const distToTarget = louis.getPosition().distanceTo(target);
+    
+    if (distToTarget > 0.5) {
+      // Move toward the suspicious direction
+      const prevPos = louis.getPosition().clone();
+      louis.moveTowards(target, deltaTime);
+      
+      // Check if stuck (not making progress)
+      const moved = prevPos.distanceTo(louis.getPosition());
+      if (moved < 0.01) {
+        louis.stuckTimer += deltaTime;
+        if (louis.stuckTimer > 1.5) {
+          // Stuck! Try a different direction or give up
+          console.log('🤔 Louis is stuck, trying new approach...');
+          louis.calculateInvestigationTarget(); // Pick new target
+          louis.stuckTimer = 0;
+        }
+      } else {
+        louis.stuckTimer = 0;
+      }
+      
+      louis.lookAt(target);
+    } else {
+      // At target, look around
+      louis.mesh.rotation.y += deltaTime * 0.5;
+    }
+    
+    // State transitions
+    if (louis.getSuspicionLevel() > 0.8) {
       louis.getStateMachine().setCurrentState('CHASE');
     }
   },
   
   exit(louis: LouisAI): void {
     louis.suspicionTimer = 0;
+    louis.stuckTimer = 0;
+    louis.clearSuspicionHistory();
   }
 };
 
@@ -115,39 +172,87 @@ const SEARCH_STATE: State<LouisAI> = {
     louis.setSpeed(louis.WALK_SPEED * 0.7);
     louis.sayQuote('search');
     louis.searchTimer = 0;
-    // Store last known position
+    louis.stuckTimer = 0;
+    louis.lastPosition.copy(louis.getPosition());
+    louis.clearSuspicionHistory();
+    
+    // Store last known position as primary search target
     const playerPos = louis.getPlayerPosition();
     if (playerPos) {
       louis.lastKnownPlayerPosition.copy(playerPos);
     }
+    
+    // Generate search waypoints radiating from last known position
+    louis.generateSearchWaypoints();
   },
   
   execute(louis: LouisAI, deltaTime: number): void {
     louis.searchTimer += deltaTime;
     
-    // Move to last known position
-    const distToLastPos = louis.getPosition().distanceTo(louis.lastKnownPlayerPosition);
-    if (distToLastPos > 1) {
-      louis.moveTowards(louis.lastKnownPlayerPosition, deltaTime);
-    } else {
-      // At last known position, look around
-      louis.mesh.rotation.y += deltaTime; // Spin around looking
-    }
-    
-    // Check for player again
+    // ALWAYS check for player first!
     const detectionLevel = louis.checkForPlayer();
+    louis.updateSuspicionHistory(detectionLevel);
+    
+    // IMMEDIATE: If player spotted, CHASE!
     if (detectionLevel > 0.9) {
       louis.getStateMachine().setCurrentState('CHASE');
+      return;
+    }
+    
+    // If low detection but still seeing something, go suspicious
+    if (detectionLevel > 0.3) {
+      louis.getStateMachine().setCurrentState('SUSPICIOUS');
+      return;
+    }
+    
+    // If suspicion is increasing, investigate that direction
+    if (louis.isSuspicionIncreasing()) {
+      louis.calculateInvestigationTarget();
+      const target = louis.getInvestigationTarget();
+      louis.moveTowards(target, deltaTime);
+      louis.lookAt(target);
+    } else {
+      // No new leads, follow search waypoints
+      const target = louis.getCurrentSearchWaypoint();
+      const distToTarget = louis.getPosition().distanceTo(target);
+      
+      if (distToTarget < 0.5) {
+        // Reached waypoint, go to next
+        louis.nextSearchWaypoint();
+        louis.stuckTimer = 0;
+      } else {
+        // Check for stuck condition
+        const prevPos = louis.getPosition().clone();
+        louis.moveTowards(target, deltaTime);
+        const moved = prevPos.distanceTo(louis.getPosition());
+        
+        if (moved < 0.01) {
+          louis.stuckTimer += deltaTime;
+          if (louis.stuckTimer > 2.0) {
+            // Stuck on this waypoint, skip to next
+            console.log('🔍 Louis skipping stuck waypoint');
+            louis.nextSearchWaypoint();
+            louis.stuckTimer = 0;
+          }
+        } else {
+          louis.stuckTimer = 0;
+        }
+        
+        louis.lookAt(target);
+      }
     }
     
     // Give up after searching
-    if (louis.searchTimer > 5) {
+    if (louis.searchTimer > 6) {
       louis.getStateMachine().setCurrentState('PATROL');
     }
   },
   
   exit(louis: LouisAI): void {
     louis.searchTimer = 0;
+    louis.stuckTimer = 0;
+    louis.clearSuspicionHistory();
+    louis.clearSearchWaypoints();
   }
 };
 
@@ -194,6 +299,16 @@ export class LouisAI {
   
   // Tracking
   public lastKnownPlayerPosition: THREE.Vector3 = new THREE.Vector3();
+  public lastPosition: THREE.Vector3 = new THREE.Vector3();
+  
+  // Suspicion tracking for directional investigation
+  private suspicionHistory: SuspicionSample[] = [];
+  private readonly SUSPICION_HISTORY_DURATION = 2.0; // Seconds to keep samples
+  private investigationTarget: THREE.Vector3 = new THREE.Vector3();
+  private currentSuspicionLevel: number = 0;
+  
+  // Stuck detection
+  public stuckTimer: number = 0;
   
   // Visuals
   private bodyMesh: THREE.Mesh | null = null;
@@ -295,8 +410,193 @@ export class LouisAI {
   update(deltaTime: number): void {
     this.stateMachine.update(deltaTime);
     
+    // Clean up old suspicion samples
+    this.pruneSuspicionHistory();
+    
     // Update vision cone debug if enabled
     // this.visionCone.updateDebugVisual(this.mesh.position, this.mesh.rotation.y);
+  }
+  
+  /**
+   * Track suspicion history to determine direction of increasing suspicion
+   */
+  updateSuspicionHistory(detectionLevel: number): void {
+    // ALWAYS update current suspicion level (even when 0)
+    this.currentSuspicionLevel = detectionLevel;
+    
+    const playerPos = this.getPlayerPosition();
+    if (!playerPos || detectionLevel <= 0) {
+      // Player not detected - still record a 0 sample to track "lost" status
+      if (detectionLevel <= 0) {
+        this.suspicionHistory.push({
+          position: this.lastKnownPlayerPosition.clone(),
+          direction: new THREE.Vector3(0, 0, 1),
+          level: 0,
+          timestamp: performance.now() / 1000
+        });
+      }
+      return;
+    }
+    
+    // Calculate direction to player
+    const direction = new THREE.Vector3()
+      .subVectors(playerPos, this.mesh.position)
+      .normalize();
+    
+    // Add new sample
+    this.suspicionHistory.push({
+      position: playerPos.clone(),
+      direction: direction,
+      level: detectionLevel,
+      timestamp: performance.now() / 1000
+    });
+  }
+  
+  /**
+   * Remove old suspicion samples
+   */
+  private pruneSuspicionHistory(): void {
+    const now = performance.now() / 1000;
+    this.suspicionHistory = this.suspicionHistory.filter(
+      sample => now - sample.timestamp < this.SUSPICION_HISTORY_DURATION
+    );
+  }
+  
+  /**
+   * Clear all suspicion history
+   */
+  clearSuspicionHistory(): void {
+    this.suspicionHistory = [];
+    this.currentSuspicionLevel = 0;
+  }
+  
+  /**
+   * Check if suspicion is increasing based on recent samples
+   */
+  isSuspicionIncreasing(): boolean {
+    if (this.suspicionHistory.length < 2) return false;
+    
+    // Compare recent samples
+    const recent = this.suspicionHistory.slice(-3); // Last 3 samples
+    const avgRecent = recent.reduce((sum, s) => sum + s.level, 0) / recent.length;
+    
+    const older = this.suspicionHistory.slice(0, Math.max(1, this.suspicionHistory.length - 3));
+    const avgOlder = older.reduce((sum, s) => sum + s.level, 0) / older.length;
+    
+    return avgRecent > avgOlder + 0.05; // Threshold to avoid noise
+  }
+  
+  /**
+   * Calculate where to investigate based on suspicion direction
+   */
+  calculateInvestigationTarget(): void {
+    if (this.suspicionHistory.length === 0) {
+      // No history, use last known player position
+      this.investigationTarget.copy(this.lastKnownPlayerPosition);
+      return;
+    }
+    
+    // Get recent samples and calculate weighted average direction
+    const recent = this.suspicionHistory.slice(-5);
+    const avgDirection = new THREE.Vector3();
+    let totalWeight = 0;
+    
+    for (const sample of recent) {
+      // Weight by level and recency
+      const weight = sample.level;
+      avgDirection.add(sample.direction.clone().multiplyScalar(weight));
+      totalWeight += weight;
+    }
+    
+    if (totalWeight > 0) {
+      avgDirection.divideScalar(totalWeight).normalize();
+    } else {
+      // Fall back to last player position
+      this.investigationTarget.copy(this.lastKnownPlayerPosition);
+      return;
+    }
+    
+    // Calculate investigation point: move in suspicion direction
+    // Distance based on suspicion level (more suspicious = investigate further)
+    const investigateDistance = 3 + this.currentSuspicionLevel * 5;
+    this.investigationTarget.copy(this.mesh.position)
+      .add(avgDirection.multiplyScalar(investigateDistance));
+    this.investigationTarget.y = 0;
+  }
+  
+  /**
+   * Get current investigation target
+   */
+  getInvestigationTarget(): THREE.Vector3 {
+    return this.investigationTarget;
+  }
+  
+  /**
+   * Get current suspicion level
+   */
+  getSuspicionLevel(): number {
+    return this.currentSuspicionLevel;
+  }
+  
+  // Search waypoint system for structured searching
+  private searchWaypoints: THREE.Vector3[] = [];
+  private currentSearchIndex: number = 0;
+  
+  /**
+   * Generate search waypoints radiating from last known position
+   */
+  generateSearchWaypoints(): void {
+    this.searchWaypoints = [];
+    const center = this.lastKnownPlayerPosition.clone();
+    
+    // Generate points in a spiral/search pattern
+    const searchRadius = 6;
+    const numPoints = 8;
+    
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2 + Math.random() * 0.5;
+      const radius = searchRadius * (0.5 + 0.5 * (i / numPoints)); // Varying radius
+      const x = center.x + Math.cos(angle) * radius;
+      const z = center.z + Math.sin(angle) * radius;
+      this.searchWaypoints.push(new THREE.Vector3(x, 0, z));
+    }
+    
+    // Start from closest point
+    this.currentSearchIndex = 0;
+    let minDist = Infinity;
+    for (let i = 0; i < this.searchWaypoints.length; i++) {
+      const dist = this.mesh.position.distanceTo(this.searchWaypoints[i]);
+      if (dist < minDist) {
+        minDist = dist;
+        this.currentSearchIndex = i;
+      }
+    }
+  }
+  
+  /**
+   * Get current search waypoint
+   */
+  getCurrentSearchWaypoint(): THREE.Vector3 {
+    if (this.searchWaypoints.length === 0) {
+      return this.lastKnownPlayerPosition;
+    }
+    return this.searchWaypoints[this.currentSearchIndex];
+  }
+  
+  /**
+   * Move to next search waypoint
+   */
+  nextSearchWaypoint(): void {
+    if (this.searchWaypoints.length === 0) return;
+    this.currentSearchIndex = (this.currentSearchIndex + 1) % this.searchWaypoints.length;
+  }
+  
+  /**
+   * Clear search waypoints
+   */
+  clearSearchWaypoints(): void {
+    this.searchWaypoints = [];
+    this.currentSearchIndex = 0;
   }
   
   // Patrol behavior
@@ -393,6 +693,11 @@ export class LouisAI {
     
     // Update game detection meter
     this.game.updateDetection(detectionLevel);
+    
+    // Update last known position if detecting player
+    if (detectionLevel > 0.1) {
+      this.lastKnownPlayerPosition.copy(playerPos);
+    }
     
     return detectionLevel;
   }
