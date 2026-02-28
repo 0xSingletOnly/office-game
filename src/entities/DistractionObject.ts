@@ -208,9 +208,8 @@ export class DistractionObject extends InteractiveObject {
     
     if (!this.state.isHeld) {
       this.pickUp();
-    } else {
-      this.throw();
     }
+    // Note: Throwing is handled by mouse click, not E key
   }
 
   private pickUp(): void {
@@ -406,12 +405,15 @@ export class DistractionObject extends InteractiveObject {
 
   private updatePrompt(): void {
     if (this.state.isHeld) {
-      this.prompt = { text: `Throw ${this.type.replace('_', ' ')}`, key: 'L-CLICK' };
+      // When held, show no prompt (throw is handled by mouse)
+      this.prompt = { text: '', key: '' };
+      this.isInteractable = false;
     } else if (this.state.isThrown) {
       this.prompt = { text: '', key: '' };
       this.isInteractable = false;
     } else {
       this.prompt = { text: `Pick up ${this.type.replace('_', ' ')}`, key: 'E' };
+      this.isInteractable = true;
     }
   }
 

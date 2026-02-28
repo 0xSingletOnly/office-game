@@ -10,6 +10,11 @@ export class InputManager {
   private justPressed: Set<string> = new Set();
   private previousKeys: Map<string, boolean> = new Map();
   
+  // Mouse buttons
+  private mouseButtons: Map<number, boolean> = new Map();
+  private justClicked: Set<number> = new Set();
+  private previousMouseButtons: Map<number, boolean> = new Map();
+  
   constructor() {
     this.setupEventListeners();
   }
@@ -21,6 +26,18 @@ export class InputManager {
     
     // Mouse movement (for pointer lock)
     document.addEventListener('mousemove', (e) => this.onMouseMove(e));
+    
+    // Mouse buttons
+    window.addEventListener('mousedown', (e) => this.onMouseDown(e));
+    window.addEventListener('mouseup', (e) => this.onMouseUp(e));
+  }
+  
+  private onMouseDown(event: MouseEvent): void {
+    this.mouseButtons.set(event.button, true);
+  }
+  
+  private onMouseUp(event: MouseEvent): void {
+    this.mouseButtons.set(event.button, false);
   }
   
   private onKeyDown(event: KeyboardEvent): void {
@@ -60,6 +77,17 @@ export class InputManager {
       }
       this.previousKeys.set(key, isPressed);
     }
+    
+    // Track just clicked mouse buttons
+    this.justClicked.clear();
+    
+    for (const [button, isPressed] of this.mouseButtons) {
+      const wasPressed = this.previousMouseButtons.get(button) || false;
+      if (isPressed && !wasPressed) {
+        this.justClicked.add(button);
+      }
+      this.previousMouseButtons.set(button, isPressed);
+    }
   }
   
   // Movement input
@@ -90,6 +118,10 @@ export class InputManager {
   // Actions
   isInteracting(): boolean {
     return this.justPressed.has('e');
+  }
+  
+  isAttacking(): boolean {
+    return this.justClicked.has(0); // Left mouse button
   }
   
   // Mouse input

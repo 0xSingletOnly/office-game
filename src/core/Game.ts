@@ -6,6 +6,7 @@ import { OfficeMap } from '../entities/OfficeMap.js';
 import { LouisAI } from '../entities/LouisAI.js';
 import { HUD } from '../ui/HUD.js';
 import { InteractiveObject } from '../entities/InteractiveObject.js';
+import { ExitZone } from '../entities/ExitZone.js';
 
 export class Game {
   private container: HTMLElement | null = null;
@@ -21,6 +22,7 @@ export class Game {
   public player: Player | null = null;
   public officeMap: OfficeMap | null = null;
   public louis: LouisAI | null = null;
+  public exitZone: ExitZone | null = null;
   
   // UI
   public hud: HUD | null = null;
@@ -32,6 +34,7 @@ export class Game {
   
   // Interactive objects
   private interactiveObjects: InteractiveObject[] = [];
+  private currentInteractable: InteractiveObject | null = null;
   private animationFrameId: number = 0;
   
   // UI elements
@@ -85,6 +88,9 @@ export class Game {
     
     // Setup interactive objects
     this.setupInteractiveObjects();
+    
+    // Create exit zone
+    this.exitZone = new ExitZone(this, new THREE.Vector3(0, 0, 18));
     
     // Setup event listeners
     this.setupEventListeners();
@@ -168,6 +174,9 @@ export class Game {
     // Update interactive objects
     this.interactiveObjects.forEach(obj => obj.update(deltaTime));
     
+    // Update exit zone
+    this.exitZone?.update(deltaTime);
+    
     // Handle interactions
     this.handleInteractions();
     
@@ -202,13 +211,46 @@ export class Game {
       }
     }
     
+    // Update current interactable and UI
+    if (nearestObject !== this.currentInteractable) {
+      this.currentInteractable = nearestObject;
+      
+      if (nearestObject) {
+        const prompt = nearestObject.getPrompt();
+        this.hud?.showInteractionPrompt(prompt.text, prompt.key);
+      } else {
+        this.hud?.hideInteractionPrompt();
+      }
+    }
+    
     // Handle E key press for interaction
     if (this.inputManager?.isInteracting() && nearestObject) {
       nearestObject.interact();
-      
-      // Track held objects (for throwing)
-      // Note: This is simplified - in production, you'd check object type
     }
+    
+    // Handle mouse click for throwing
+    if (this.inputManager?.isAttacking()) {
+      this.handleThrow();
+    }
+  }
+  
+  private handleThrow(): void {
+    // Find held distraction object
+    for (const obj of this.interactiveObjects) {
+      // Check if it's a DistractionObject and is held
+      const distractionObj = obj as { isHeld?: () => boolean; throw?: () => void };
+      if (distractionObj.isHeld && distractionObj.throw && distractionObj.isHeld()) {
+        distractionObj.throw();
+        break;
+      }
+    }
+  }
+  
+  /**
+   * Show/hide hidden indicator in HUD
+   */
+  setHiddenState(hidden: boolean): void {
+    this.hud?.showHiddenIndicator(hidden);
   }
   
   /**
@@ -258,6 +300,15 @@ export class Game {
     this.stop();
   }
   
+  /**
+   * Called when player reaches the exit
+   */
+  onPlayerEscape(): void {
+    this.isGameOver = true;
+    this.hud?.showEscapeWin();
+    this.stop();
+  }
+  
   private render(): void {
     if (!this.renderer || !this.scene || !this.cameraController) return;
     
@@ -292,5 +343,8 @@ export class Game {
     // Clean up interactive objects
     this.interactiveObjects.forEach(obj => obj.dispose());
     this.interactiveObjects = [];
+    
+    // Clean up exit zone
+    this.exitZone?.dispose();
   }
 }

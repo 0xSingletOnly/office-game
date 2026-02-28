@@ -266,7 +266,7 @@ export class HidingSpot extends InteractiveObject {
     this.transitionTimer = 0;
     
     // Show "HIDDEN" UI
-    this.showHiddenUI(true);
+    this.game.setHiddenState(true);
     
     setTimeout(() => {
       this.isTransitioning = false;
@@ -296,7 +296,7 @@ export class HidingSpot extends InteractiveObject {
     this.prompt.text = 'Hide';
     
     // Hide "HIDDEN" UI
-    this.showHiddenUI(false);
+    this.game.setHiddenState(false);
     
     setTimeout(() => {
       this.isTransitioning = false;
@@ -326,13 +326,7 @@ export class HidingSpot extends InteractiveObject {
     return this.mesh.position.clone().add(offset);
   }
 
-  private showHiddenUI(show: boolean): void {
-    // This will be handled by the HUD
-    // For now, log to console
-    if (show) {
-      console.log('👁️ HIDDEN - Louis cannot see you!');
-    }
-  }
+
 
   /**
    * Check if player is currently hidden in this spot

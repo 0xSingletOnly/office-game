@@ -17,8 +17,17 @@ export class HUD {
   private timerElement!: HTMLElement;
   private louisStateElement!: HTMLElement;
   
+  // Interaction prompt
+  private interactionPrompt!: HTMLElement;
+  private interactionKey!: HTMLElement;
+  private interactionText!: HTMLElement;
+  
+  // Hidden indicator
+  private hiddenIndicator!: HTMLElement;
+  
   private gameOverScreen: HTMLElement | null = null;
   private winScreen: HTMLElement | null = null;
+  private escapeScreen: HTMLElement | null = null;
 
   constructor() {
     this.container = document.getElementById('ui-layer')!;
@@ -143,6 +152,72 @@ export class HUD {
     this.louisStateElement.textContent = 'Louis: PATROL';
     this.container.appendChild(this.louisStateElement);
     
+    // Interaction prompt (center bottom)
+    this.interactionPrompt = document.createElement('div');
+    this.interactionPrompt.style.cssText = `
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    `;
+    
+    this.interactionKey = document.createElement('span');
+    this.interactionKey.style.cssText = `
+      background: rgba(201, 162, 39, 0.9);
+      color: #000;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 18px;
+      font-family: monospace;
+      box-shadow: 0 0 10px rgba(201, 162, 39, 0.5);
+    `;
+    this.interactionKey.textContent = 'E';
+    
+    this.interactionText = document.createElement('span');
+    this.interactionText.style.cssText = `
+      color: #fff;
+      font-size: 18px;
+      text-shadow: 0 0 5px #000;
+      font-weight: 500;
+    `;
+    this.interactionText.textContent = 'Interact';
+    
+    this.interactionPrompt.appendChild(this.interactionKey);
+    this.interactionPrompt.appendChild(this.interactionText);
+    this.container.appendChild(this.interactionPrompt);
+    
+    // Hidden indicator (center)
+    this.hiddenIndicator = document.createElement('div');
+    this.hiddenIndicator.style.cssText = `
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #00ff00;
+      font-size: 36px;
+      font-weight: bold;
+      text-shadow: 0 0 20px #00ff00;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    `;
+    this.hiddenIndicator.innerHTML = `
+      <span>👁️ HIDDEN</span>
+      <span style="font-size: 16px; color: #aaa;">Louis cannot see you</span>
+    `;
+    this.container.appendChild(this.hiddenIndicator);
+    
     // Create game over screens
     this.createGameOverScreens();
   }
@@ -187,7 +262,7 @@ export class HUD {
     
     this.container.appendChild(this.gameOverScreen);
     
-    // Win Screen
+    // Win Screen (Timer)
     this.winScreen = document.createElement('div');
     this.winScreen.className = 'win-screen';
     this.winScreen.style.cssText = `
@@ -207,10 +282,10 @@ export class HUD {
     
     this.winScreen.innerHTML = `
       <h1 style="color: #00ff00; font-size: 64px; margin-bottom: 20px; text-shadow: 0 0 20px #00ff00;">
-        ESCAPED!
+        TIME'S UP!
       </h1>
       <p style="color: #fff; font-size: 24px; margin-bottom: 40px;">
-        You successfully avoided the drug test!
+        Louis gave up! You survived the 3 minutes!
       </p>
       <button id="play-again-btn" style="
         padding: 20px 60px;
@@ -226,6 +301,48 @@ export class HUD {
     
     this.container.appendChild(this.winScreen);
     
+    // Escape Win Screen (Reached exit)
+    this.escapeScreen = document.createElement('div');
+    this.escapeScreen.className = 'escape-screen';
+    this.escapeScreen.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 100, 0, 0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      pointer-events: auto;
+    `;
+    
+    this.escapeScreen.innerHTML = `
+      <h1 style="color: #00ff00; font-size: 72px; margin-bottom: 20px; text-shadow: 0 0 30px #00ff00;">
+        ESCAPED!
+      </h1>
+      <p style="color: #c9a227; font-size: 28px; margin-bottom: 20px; font-style: italic;">
+        "You just got Un-Litt!"
+      </p>
+      <p style="color: #fff; font-size: 24px; margin-bottom: 40px;">
+        You reached the exit and escaped the drug test!
+      </p>
+      <button id="escape-again-btn" style="
+        padding: 20px 60px;
+        font-size: 24px;
+        background: #c9a227;
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+      ">PLAY AGAIN</button>
+    `;
+    
+    this.container.appendChild(this.escapeScreen);
+    
     // Add event listeners
     const restartBtn = document.getElementById('restart-btn');
     restartBtn?.addEventListener('click', () => {
@@ -236,6 +353,26 @@ export class HUD {
     playAgainBtn?.addEventListener('click', () => {
       window.location.reload();
     });
+    
+    const escapeAgainBtn = document.getElementById('escape-again-btn');
+    escapeAgainBtn?.addEventListener('click', () => {
+      window.location.reload();
+    });
+  }
+  
+  // Interaction prompt methods
+  showInteractionPrompt(text: string, key: string = 'E'): void {
+    this.interactionText.textContent = text;
+    this.interactionKey.textContent = key;
+    this.interactionPrompt.style.opacity = '1';
+  }
+  
+  hideInteractionPrompt(): void {
+    this.interactionPrompt.style.opacity = '0';
+  }
+  
+  showHiddenIndicator(show: boolean): void {
+    this.hiddenIndicator.style.opacity = show ? '1' : '0';
   }
   
   // Update methods
@@ -311,6 +448,12 @@ export class HUD {
   showWin(): void {
     if (this.winScreen) {
       this.winScreen.style.display = 'flex';
+    }
+  }
+  
+  showEscapeWin(): void {
+    if (this.escapeScreen) {
+      this.escapeScreen.style.display = 'flex';
     }
   }
   
