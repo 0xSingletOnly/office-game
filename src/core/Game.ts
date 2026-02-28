@@ -9,6 +9,7 @@ import { HUD } from '../ui/HUD.js';
 import { InteractiveObject } from '../entities/InteractiveObject.js';
 import { ExitZone } from '../entities/ExitZone.js';
 import { PS1Renderer } from './PS1Renderer.js';
+import { AudioManager } from '../audio/AudioManager.js';
 
 export class Game {
   private container: HTMLElement | null = null;
@@ -30,6 +31,9 @@ export class Game {
   
   // UI
   public hud: HUD | null = null;
+  
+  // Audio
+  public audioManager: AudioManager = new AudioManager();
   
   // Game state
   private gameTime: number = 180; // 3 minutes in seconds
@@ -113,7 +117,15 @@ export class Game {
     // Handle window resize
     window.addEventListener('resize', () => this.onWindowResize());
     
+    // Initialize audio (preload the soundtrack)
+    this.initAudio();
+    
     console.log('🎮 Game initialized! Click "Start" to begin.');
+  }
+  
+  private async initAudio(): Promise<void> {
+    await this.audioManager.init();
+    await this.audioManager.loadBGM('/audio/Greenback_Boogie_-_Theme_from_the_TV_Suits_(mp3.pm).mp3');
   }
   
   private setupEventListeners(): void {
@@ -142,9 +154,14 @@ export class Game {
     });
   }
   
-  start(): void {
+  async start(): Promise<void> {
     this.requestPointerLock();
     this.isRunning = true;
+    
+    // Start playing the soundtrack
+    this.audioManager.resume();
+    this.audioManager.playBGM(true);
+    
     this.gameLoop();
     console.log('🚀 Game started! Good luck, Mike!');
   }
@@ -194,6 +211,9 @@ export class Game {
     
     // Handle interactions
     this.handleInteractions();
+    
+    // Handle audio mute toggle
+    this.handleAudioControls();
     
     // Update camera
     this.cameraController?.update(deltaTime);
@@ -258,6 +278,15 @@ export class Game {
         distractionObj.throw();
         break;
       }
+    }
+  }
+  
+  private handleAudioControls(): void {
+    // M key to toggle mute
+    if (this.inputManager?.isKeyJustPressed('m')) {
+      const isMuted = this.audioManager.toggleMute();
+      this.hud?.showNotification(isMuted ? '🔇 Music Muted' : '🔊 Music Unmuted');
+      this.hud?.setMuteIndicator(isMuted);
     }
   }
   
@@ -368,6 +397,7 @@ export class Game {
     this.isRunning = false;
     cancelAnimationFrame(this.animationFrameId);
     document.exitPointerLock();
+    this.audioManager.stopBGM();
   }
   
   public dispose(): void {

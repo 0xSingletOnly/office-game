@@ -45,7 +45,7 @@ export class InputManager {
     this.keys.set(key, true);
     
     // Prevent default for game keys to avoid page scrolling
-    if (['w', 'a', 's', 'd', 'e', 'shift', ' '].includes(key)) {
+    if (['w', 'a', 's', 'd', 'e', 'shift', ' ', 'm'].includes(key)) {
       event.preventDefault();
     }
   }

@@ -17,6 +17,7 @@ export class HUD {
   
   private timerElement!: HTMLElement;
   private louisStateElement!: HTMLElement;
+  private muteIndicator!: HTMLElement;
   
   // Interaction prompt
   private interactionPrompt!: HTMLElement;
@@ -152,6 +153,22 @@ export class HUD {
     `;
     this.timerElement.textContent = '03:00';
     this.container.appendChild(this.timerElement);
+    
+    // Mute indicator (top right, below timer)
+    this.muteIndicator = document.createElement('div');
+    this.muteIndicator.style.cssText = `
+      position: absolute;
+      top: 50px;
+      right: 30px;
+      color: #888;
+      font-size: 12px;
+      font-family: 'Press Start 2P', cursive;
+      text-shadow: 1px 1px 0 #000;
+      opacity: 0;
+      transition: opacity 0.2s;
+    `;
+    this.muteIndicator.textContent = '🔇 MUTED';
+    this.container.appendChild(this.muteIndicator);
     
     // Louis State indicator (bottom right) - PS1 style status
     this.louisStateElement = document.createElement('div');
@@ -592,6 +609,10 @@ export class HUD {
     if (this.escapeScreen) {
       this.escapeScreen.style.display = 'flex';
     }
+  }
+  
+  setMuteIndicator(isMuted: boolean): void {
+    this.muteIndicator.style.opacity = isMuted ? '1' : '0';
   }
   
   hide(): void {

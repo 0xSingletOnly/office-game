@@ -57,3 +57,11 @@ temp/
 
 # Optional: OS files
 Thumbs.db
+
+# Audio files (soundtrack - too large for git)
+public/audio/
+*.mp3
+*.ogg
+*.wav
+*.m4a
+*.flac
