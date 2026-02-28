@@ -73,15 +73,15 @@ export class Game {
     
     // Initialize PS1 post-processing renderer
     // pixelScale: 1.5 = subtle pixelation (retro feel without nausea)
-    // colorDepth: 48 = more color gradations for smoother look
+    // colorDepth: 64 = more color gradations for brighter look
     // vertexSnap: 2 = minimal vertex snapping
-    this.ps1Renderer = new PS1Renderer(this.renderer, 1.5, 48, true, 2);
+    this.ps1Renderer = new PS1Renderer(this.renderer, 1.5, 64, true, 2);
     
     // Initialize scene with PS1-style colors - bright for visibility
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x2a2a4a);
+    this.scene.background = new THREE.Color(0x87CEEB); // Sky blue background
     // Light fog for atmosphere without darkness
-    this.scene.fog = new THREE.Fog(0x2a2a4a, 20, 60);
+    this.scene.fog = new THREE.Fog(0x87CEEB, 20, 60);
     
     // Initialize game systems
     this.inputManager = new InputManager();
