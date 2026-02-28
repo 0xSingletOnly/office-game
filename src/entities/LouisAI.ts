@@ -336,9 +336,8 @@ export class LouisAI {
     // Body (suit - darker for Louis)
     // Capsule height 0.9, so center at 0.45 for bottom to touch ground
     const bodyGeometry = new THREE.CapsuleGeometry(0.3, 0.9, 4, 8);
-    const bodyMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x1a1a1a,  // Black suit
-      roughness: 0.7 
+    const bodyMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0x555566,  // Lighter blue-grey suit (visible but dark)
     });
     this.bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
     this.bodyMesh.position.y = 0.45;
@@ -347,10 +346,9 @@ export class LouisAI {
     
     // Head (Louis is shorter than Mike)
     // Position on top of body: 0.45 + 0.45 (half capsule) + 0.23 (head radius) = 1.13
-    const headGeometry = new THREE.SphereGeometry(0.23, 16, 16);
-    const headMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xffdbac,
-      roughness: 0.5 
+    const headGeometry = new THREE.SphereGeometry(0.23, 12, 12);
+    const headMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0xffddaa,
     });
     const head = new THREE.Mesh(headGeometry, headMaterial);
     head.position.y = 1.13;
@@ -359,9 +357,8 @@ export class LouisAI {
     
     // Hair (Louis has different hair)
     const hairGeometry = new THREE.BoxGeometry(0.33, 0.1, 0.38);
-    const hairMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x2c1a0e,
-      roughness: 0.9 
+    const hairMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0x5a3620,
     });
     const hair = new THREE.Mesh(hairGeometry, hairMaterial);
     hair.position.y = 1.33;
@@ -370,9 +367,8 @@ export class LouisAI {
     
     // The drug test folder (very important!)
     const folderGeometry = new THREE.BoxGeometry(0.3, 0.4, 0.05);
-    const folderMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xccaa00,  // Manila folder
-      roughness: 0.6 
+    const folderMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0xffdd55,  // Bright Manila folder
     });
     const folder = new THREE.Mesh(folderGeometry, folderMaterial);
     folder.position.set(0.35, 0.65, 0.2);

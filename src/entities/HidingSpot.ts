@@ -69,9 +69,8 @@ export class HidingSpot extends InteractiveObject {
   }
 
   private createBathroomStall(group: THREE.Group): void {
-    const wallMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xcccccc,
-      roughness: 0.8 
+    const wallMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0xe0e0e0,
     });
     
     // Side walls
@@ -95,9 +94,8 @@ export class HidingSpot extends InteractiveObject {
     
     // Door (interactive)
     const doorGeo = new THREE.BoxGeometry(1.1, 2.5, 0.1);
-    const doorMat = new THREE.MeshStandardMaterial({ 
-      color: 0xaaaaaa,
-      roughness: 0.6 
+    const doorMat = new THREE.MeshLambertMaterial({ 
+      color: 0xcccccc,
     });
     this.doorMesh = new THREE.Mesh(doorGeo, doorMat);
     this.doorMesh.position.set(0, 1.25, 0.7);
@@ -106,7 +104,7 @@ export class HidingSpot extends InteractiveObject {
     
     // Door handle
     const handleGeo = new THREE.SphereGeometry(0.05);
-    const handleMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+    const handleMat = new THREE.MeshLambertMaterial({ color: 0xaaaaaa });
     const handle = new THREE.Mesh(handleGeo, handleMat);
     handle.position.set(0.3, 1.2, 0.75);
     group.add(handle);
@@ -115,9 +113,8 @@ export class HidingSpot extends InteractiveObject {
   }
 
   private createCloset(group: THREE.Group): void {
-    const closetMat = new THREE.MeshStandardMaterial({ 
-      color: 0x4a3728,
-      roughness: 0.9 
+    const closetMat = new THREE.MeshLambertMaterial({ 
+      color: 0x6b5038,
     });
     
     // Frame
@@ -144,9 +141,8 @@ export class HidingSpot extends InteractiveObject {
     
     // Sliding doors
     const doorGeo = new THREE.BoxGeometry(0.7, 2.9, 0.05);
-    const doorMat = new THREE.MeshStandardMaterial({ 
-      color: 0x5a4738,
-      roughness: 0.8 
+    const doorMat = new THREE.MeshLambertMaterial({ 
+      color: 0x7a6048,
     });
     
     this.doorMesh = new THREE.Mesh(doorGeo, doorMat);
@@ -192,10 +188,8 @@ export class HidingSpot extends InteractiveObject {
   }
 
   private createLocker(group: THREE.Group): void {
-    const lockerMat = new THREE.MeshStandardMaterial({ 
-      color: 0x666666,
-      metalness: 0.7,
-      roughness: 0.3 
+    const lockerMat = new THREE.MeshLambertMaterial({ 
+      color: 0x888888,
     });
     
     // Locker body
@@ -210,7 +204,7 @@ export class HidingSpot extends InteractiveObject {
     // Door
     this.doorMesh = new THREE.Mesh(
       new THREE.BoxGeometry(0.8, 1.9, 0.05),
-      new THREE.MeshStandardMaterial({ color: 0x777777 })
+      new THREE.MeshLambertMaterial({ color: 0x999999 })
     );
     this.doorMesh.position.set(0, 1, 0.4);
     this.doorMesh.castShadow = true;

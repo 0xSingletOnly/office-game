@@ -50,9 +50,8 @@ export class Player {
     // Body (suit - blue for Mike)
     // Capsule height 1.0, so center at 0.5 for bottom to touch ground
     const bodyGeometry = new THREE.CapsuleGeometry(0.3, 1, 4, 8);
-    const bodyMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x2c4f7c,  // Suits blue
-      roughness: 0.7 
+    const bodyMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0x66aaff,  // Bright Suits blue (PS1 saturated)
     });
     this.bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
     this.bodyMesh.position.y = 0.5;
@@ -61,10 +60,9 @@ export class Player {
     
     // Head
     // Position on top of body: 0.5 + 0.5 (half capsule) + 0.25 (head radius) = 1.25
-    const headGeometry = new THREE.SphereGeometry(0.25, 16, 16);
-    const headMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0xffdbac,  // Skin tone
-      roughness: 0.5 
+    const headGeometry = new THREE.SphereGeometry(0.25, 12, 12);
+    const headMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0xffddaa,  // Brighter skin tone (PS1 style)
     });
     this.headMesh = new THREE.Mesh(headGeometry, headMaterial);
     this.headMesh.position.y = 1.25;
@@ -73,9 +71,8 @@ export class Player {
     
     // Hair (Mike's distinctive hairstyle - simple box for now)
     const hairGeometry = new THREE.BoxGeometry(0.35, 0.15, 0.4);
-    const hairMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x3d2314,  // Dark brown
-      roughness: 0.9 
+    const hairMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0x6b4525,  // Lighter brown
     });
     const hair = new THREE.Mesh(hairGeometry, hairMaterial);
     hair.position.y = 1.45;
@@ -85,9 +82,8 @@ export class Player {
     
     // Briefcase (iconic Mike accessory)
     const briefcaseGeometry = new THREE.BoxGeometry(0.4, 0.3, 0.1);
-    const briefcaseMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x1a1a1a,  // Black leather
-      roughness: 0.3 
+    const briefcaseMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0x444444,  // Dark grey leather
     });
     const briefcase = new THREE.Mesh(briefcaseGeometry, briefcaseMaterial);
     briefcase.position.set(0.35, 0.75, 0.2);

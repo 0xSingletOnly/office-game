@@ -1,6 +1,7 @@
 /**
- * HUD - Heads Up Display
+ * HUD - Heads Up Display (PS1 Retro Style)
  * Shows detection meter, stamina, timer, and game status
+ * Styled to look like a PlayStation 1 game interface
  */
 
 export class HUD {
@@ -37,7 +38,7 @@ export class HUD {
   }
   
   private createHUD(): void {
-    // Detection Meter (only visible when detected)
+    // Detection Meter (only visible when detected) - PS1 style blocky meter
     this.detectionContainer = document.createElement('div');
     this.detectionContainer.className = 'detection-meter';
     this.detectionContainer.style.cssText = `
@@ -45,10 +46,11 @@ export class HUD {
       top: 20px;
       left: 50%;
       transform: translateX(-50%);
-      width: 300px;
+      width: 280px;
       text-align: center;
       opacity: 0;
-      transition: opacity 0.3s;
+      transition: opacity 0.15s;
+      font-family: 'VT323', monospace;
     `;
     
     this.detectionText = document.createElement('div');
@@ -56,27 +58,31 @@ export class HUD {
     this.detectionText.style.cssText = `
       color: #ff0000;
       font-weight: bold;
-      font-size: 18px;
-      text-shadow: 0 0 10px #ff0000;
-      margin-bottom: 5px;
+      font-size: 28px;
+      text-shadow: 2px 2px 0 #000;
+      margin-bottom: 4px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 14px;
+      letter-spacing: 2px;
     `;
     
     const detectionBg = document.createElement('div');
     detectionBg.style.cssText = `
       width: 100%;
       height: 20px;
-      background: rgba(0, 0, 0, 0.5);
-      border: 2px solid #333;
-      border-radius: 10px;
+      background: #1a1a1a;
+      border: 3px solid #444;
       overflow: hidden;
+      image-rendering: pixelated;
     `;
     
     this.detectionBar = document.createElement('div');
     this.detectionBar.style.cssText = `
       width: 0%;
       height: 100%;
-      background: linear-gradient(90deg, #ffff00, #ff0000);
+      background: linear-gradient(180deg, #ff4444 0%, #ff0000 50%, #aa0000 100%);
       transition: width 0.1s linear;
+      image-rendering: pixelated;
     `;
     
     detectionBg.appendChild(this.detectionBar);
@@ -84,40 +90,45 @@ export class HUD {
     this.detectionContainer.appendChild(detectionBg);
     this.container.appendChild(this.detectionContainer);
     
-    // Stamina Bar (bottom left)
+    // Stamina Bar (bottom left) - PS1 style segmented bar
     this.staminaContainer = document.createElement('div');
     this.staminaContainer.style.cssText = `
       position: absolute;
       bottom: 30px;
       left: 30px;
-      width: 200px;
+      width: 180px;
+      font-family: 'VT323', monospace;
     `;
     
     const staminaLabel = document.createElement('div');
     staminaLabel.textContent = 'STAMINA';
     staminaLabel.style.cssText = `
-      color: #fff;
-      font-size: 12px;
-      margin-bottom: 5px;
-      text-shadow: 0 0 5px #000;
+      color: #ffff00;
+      font-size: 18px;
+      margin-bottom: 4px;
+      text-shadow: 1px 1px 0 #000;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      letter-spacing: 1px;
     `;
     
     const staminaBg = document.createElement('div');
     staminaBg.style.cssText = `
       width: 100%;
-      height: 15px;
-      background: rgba(0, 0, 0, 0.5);
-      border: 2px solid #c9a227;
-      border-radius: 7px;
+      height: 16px;
+      background: #1a1a1a;
+      border: 3px solid #666;
       overflow: hidden;
+      image-rendering: pixelated;
     `;
     
     this.staminaBar = document.createElement('div');
     this.staminaBar.style.cssText = `
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, #c9a227, #ffd700);
+      background: linear-gradient(180deg, #ffff00 0%, #c9a227 50%, #886600 100%);
       transition: width 0.1s linear;
+      image-rendering: pixelated;
     `;
     
     staminaBg.appendChild(this.staminaBar);
@@ -125,36 +136,39 @@ export class HUD {
     this.staminaContainer.appendChild(staminaBg);
     this.container.appendChild(this.staminaContainer);
     
-    // Timer (top right)
+    // Timer (top right) - PS1 style digital clock
     this.timerElement = document.createElement('div');
     this.timerElement.style.cssText = `
       position: absolute;
       top: 20px;
       right: 30px;
-      color: #c9a227;
-      font-size: 32px;
+      color: #00ff00;
+      font-size: 36px;
       font-weight: bold;
-      font-family: 'Courier New', monospace;
-      text-shadow: 0 0 10px #000;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 20px;
+      text-shadow: 2px 2px 0 #000;
+      letter-spacing: 2px;
     `;
     this.timerElement.textContent = '03:00';
     this.container.appendChild(this.timerElement);
     
-    // Louis State indicator (bottom right, for debugging)
+    // Louis State indicator (bottom right) - PS1 style status
     this.louisStateElement = document.createElement('div');
     this.louisStateElement.style.cssText = `
       position: absolute;
       bottom: 30px;
       right: 30px;
       color: #fff;
-      font-size: 14px;
-      text-shadow: 0 0 5px #000;
-      opacity: 0.7;
+      font-size: 16px;
+      text-shadow: 1px 1px 0 #000;
+      font-family: 'VT323', monospace;
+      opacity: 0.9;
     `;
     this.louisStateElement.textContent = 'Louis: PATROL';
     this.container.appendChild(this.louisStateElement);
     
-    // Interaction prompt (center bottom)
+    // Interaction prompt (center bottom) - PS1 style button prompt
     this.interactionPrompt = document.createElement('div');
     this.interactionPrompt.style.cssText = `
       position: absolute;
@@ -163,31 +177,33 @@ export class HUD {
       transform: translateX(-50%);
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       opacity: 0;
-      transition: opacity 0.2s;
+      transition: opacity 0.15s;
       pointer-events: none;
     `;
     
     this.interactionKey = document.createElement('span');
     this.interactionKey.style.cssText = `
-      background: rgba(201, 162, 39, 0.9);
+      background: #ffff00;
       color: #000;
-      padding: 8px 16px;
-      border-radius: 4px;
+      padding: 6px 12px;
       font-weight: bold;
-      font-size: 18px;
-      font-family: monospace;
-      box-shadow: 0 0 10px rgba(201, 162, 39, 0.5);
+      font-size: 16px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      border: 3px solid #fff;
+      box-shadow: 3px 3px 0 #000;
+      image-rendering: pixelated;
     `;
     this.interactionKey.textContent = 'E';
     
     this.interactionText = document.createElement('span');
     this.interactionText.style.cssText = `
       color: #fff;
-      font-size: 18px;
-      text-shadow: 0 0 5px #000;
-      font-weight: 500;
+      font-size: 20px;
+      text-shadow: 2px 2px 0 #000;
+      font-family: 'VT323', monospace;
     `;
     this.interactionText.textContent = 'Interact';
     
@@ -195,7 +211,7 @@ export class HUD {
     this.interactionPrompt.appendChild(this.interactionText);
     this.container.appendChild(this.interactionPrompt);
     
-    // Hidden indicator (center)
+    // Hidden indicator (center) - PS1 style status text
     this.hiddenIndicator = document.createElement('div');
     this.hiddenIndicator.style.cssText = `
       position: absolute;
@@ -203,20 +219,23 @@ export class HUD {
       left: 50%;
       transform: translate(-50%, -50%);
       color: #00ff00;
-      font-size: 36px;
+      font-size: 24px;
       font-weight: bold;
-      text-shadow: 0 0 20px #00ff00;
+      text-shadow: 2px 2px 0 #000;
       opacity: 0;
-      transition: opacity 0.3s;
+      transition: opacity 0.2s;
       pointer-events: none;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 12px;
+      letter-spacing: 2px;
     `;
     this.hiddenIndicator.innerHTML = `
-      <span>👁️ HIDDEN</span>
-      <span style="font-size: 16px; color: #aaa;">Louis cannot see you</span>
+      <span>◆ HIDDEN ◆</span>
+      <span style="font-size: 10px; color: #88ff88; font-family: 'VT323', monospace; font-size: 16px;">Louis cannot see you</span>
     `;
     this.container.appendChild(this.hiddenIndicator);
     
@@ -228,13 +247,16 @@ export class HUD {
       left: 50%;
       transform: translate(-50%, -50%);
       color: #ff8800;
-      font-size: 24px;
+      font-size: 18px;
       font-weight: bold;
-      text-shadow: 0 0 10px #ff0000;
+      text-shadow: 2px 2px 0 #000;
       opacity: 0;
-      transition: opacity 0.3s;
+      transition: opacity 0.2s;
       pointer-events: none;
       text-align: center;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      letter-spacing: 1px;
     `;
     this.container.appendChild(this.hidingWarning);
     
@@ -242,12 +264,12 @@ export class HUD {
     this.notificationContainer = document.createElement('div');
     this.notificationContainer.style.cssText = `
       position: absolute;
-      top: 80px;
+      top: 70px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       pointer-events: none;
       z-index: 100;
     `;
@@ -258,121 +280,124 @@ export class HUD {
   }
   
   private createGameOverScreens(): void {
-    // Game Over (Caught)
+    // Game Over (Caught) - PS1 style game over screen
     this.gameOverScreen = document.createElement('div');
     this.gameOverScreen.className = 'game-over-screen';
     this.gameOverScreen.style.cssText = `
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.9);
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.95);
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 1000;
       pointer-events: auto;
+      font-family: 'VT323', monospace;
     `;
     
     this.gameOverScreen.innerHTML = `
-      <h1 style="color: #ff0000; font-size: 64px; margin-bottom: 20px; text-shadow: 0 0 20px #ff0000;">
-        YOU GOT LITT UP!
+      <h1 style="color: #ff0000; font-size: 32px; margin-bottom: 30px; text-shadow: 3px 3px 0 #000; font-family: 'Press Start 2P', cursive; line-height: 1.5; text-align: center;">
+        YOU GOT<br>LITT UP!
       </h1>
-      <p style="color: #fff; font-size: 24px; margin-bottom: 40px;">
+      <p style="color: #ff8888; font-size: 20px; margin-bottom: 40px; text-shadow: 1px 1px 0 #000;">
         Louis caught you for a drug test.
       </p>
       <button id="restart-btn" style="
-        padding: 20px 60px;
-        font-size: 24px;
-        background: #c9a227;
-        color: #000;
-        border: none;
-        border-radius: 8px;
+        padding: 15px 40px;
+        font-size: 14px;
+        font-family: 'Press Start 2P', cursive;
+        background: #aa0000;
+        color: #fff;
+        border: 4px solid #ff0000;
         cursor: pointer;
-        font-weight: bold;
+        box-shadow: 0 4px 0 #000;
       ">TRY AGAIN</button>
     `;
     
     this.container.appendChild(this.gameOverScreen);
     
-    // Win Screen (Timer)
+    // Win Screen (Timer) - PS1 style victory screen
     this.winScreen = document.createElement('div');
     this.winScreen.className = 'win-screen';
     this.winScreen.style.cssText = `
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 50, 0, 0.9);
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 50, 0, 0.95);
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 1000;
       pointer-events: auto;
+      font-family: 'VT323', monospace;
     `;
     
     this.winScreen.innerHTML = `
-      <h1 style="color: #00ff00; font-size: 64px; margin-bottom: 20px; text-shadow: 0 0 20px #00ff00;">
+      <h1 style="color: #00ff00; font-size: 32px; margin-bottom: 30px; text-shadow: 3px 3px 0 #000; font-family: 'Press Start 2P', cursive;">
         TIME'S UP!
       </h1>
-      <p style="color: #fff; font-size: 24px; margin-bottom: 40px;">
-        Louis gave up! You survived the 3 minutes!
+      <p style="color: #88ff88; font-size: 20px; margin-bottom: 40px; text-shadow: 1px 1px 0 #000;">
+        Louis gave up! You survived!
       </p>
       <button id="play-again-btn" style="
-        padding: 20px 60px;
-        font-size: 24px;
-        background: #c9a227;
+        padding: 15px 40px;
+        font-size: 14px;
+        font-family: 'Press Start 2P', cursive;
+        background: #00aa00;
         color: #000;
-        border: none;
-        border-radius: 8px;
+        border: 4px solid #00ff00;
         cursor: pointer;
-        font-weight: bold;
+        box-shadow: 0 4px 0 #000;
       ">PLAY AGAIN</button>
     `;
     
     this.container.appendChild(this.winScreen);
     
-    // Escape Win Screen (Reached exit)
+    // Escape Win Screen (Reached exit) - PS1 style victory
     this.escapeScreen = document.createElement('div');
     this.escapeScreen.className = 'escape-screen';
     this.escapeScreen.style.cssText = `
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 100, 0, 0.95);
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 80, 0, 0.95);
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 1000;
       pointer-events: auto;
+      font-family: 'VT323', monospace;
     `;
     
     this.escapeScreen.innerHTML = `
-      <h1 style="color: #00ff00; font-size: 72px; margin-bottom: 20px; text-shadow: 0 0 30px #00ff00;">
+      <h1 style="color: #00ff00; font-size: 32px; margin-bottom: 30px; text-shadow: 3px 3px 0 #000; font-family: 'Press Start 2P', cursive;">
         ESCAPED!
       </h1>
-      <p style="color: #c9a227; font-size: 28px; margin-bottom: 20px; font-style: italic;">
+      <p style="color: #c9a227; font-size: 18px; margin-bottom: 20px; font-style: italic; text-shadow: 1px 1px 0 #000;">
         "You just got Un-Litt!"
       </p>
-      <p style="color: #fff; font-size: 24px; margin-bottom: 40px;">
+      <p style="color: #fff; font-size: 18px; margin-bottom: 40px; text-shadow: 1px 1px 0 #000;">
         You reached the exit and escaped the drug test!
       </p>
       <button id="escape-again-btn" style="
-        padding: 20px 60px;
-        font-size: 24px;
-        background: #c9a227;
+        padding: 15px 40px;
+        font-size: 14px;
+        font-family: 'Press Start 2P', cursive;
+        background: #00aa00;
         color: #000;
-        border: none;
-        border-radius: 8px;
+        border: 4px solid #00ff00;
         cursor: pointer;
-        font-weight: bold;
+        box-shadow: 0 4px 0 #000;
       ">PLAY AGAIN</button>
     `;
     
@@ -418,7 +443,7 @@ export class HUD {
    * Show warning that hiding time is running out
    */
   showHidingWarning(secondsLeft: number): void {
-    this.hidingWarning.textContent = `⚠️ GET OUT! ${secondsLeft.toFixed(1)}s left!`;
+    this.hidingWarning.textContent = `GET OUT! ${secondsLeft.toFixed(0)}s`;
     this.hidingWarning.style.opacity = '1';
     
     // Pulse animation
@@ -442,15 +467,16 @@ export class HUD {
   showNotification(message: string, duration: number = 3000): void {
     const notification = document.createElement('div');
     notification.style.cssText = `
-      background: rgba(0, 0, 0, 0.8);
-      color: #c9a227;
-      padding: 12px 24px;
-      border-radius: 8px;
+      background: #1a1a1a;
+      color: #ffff00;
+      padding: 10px 20px;
       font-size: 16px;
-      font-weight: bold;
-      border: 2px solid #c9a227;
-      box-shadow: 0 0 20px rgba(201, 162, 39, 0.5);
-      animation: slideDown 0.3s ease-out;
+      font-family: 'VT323', monospace;
+      border: 3px solid #ffff00;
+      box-shadow: 3px 3px 0 #000;
+      animation: slideDown 0.2s ease-out;
+      text-align: center;
+      text-shadow: 1px 1px 0 #000;
     `;
     notification.textContent = message;
     
@@ -475,10 +501,10 @@ export class HUD {
     
     // Remove after duration
     setTimeout(() => {
-      notification.style.animation = 'fadeOut 0.3s ease-out';
+      notification.style.animation = 'fadeOut 0.2s ease-out';
       setTimeout(() => {
         notification.remove();
-      }, 300);
+      }, 200);
     }, duration);
   }
   
@@ -495,15 +521,15 @@ export class HUD {
     if (level < 0.3) {
       this.detectionText.textContent = 'SUSPICION';
       this.detectionText.style.color = '#ffff00';
-      this.detectionBar.style.background = 'linear-gradient(90deg, #ffff00, #ffaa00)';
+      this.detectionBar.style.background = 'linear-gradient(180deg, #ffff00 0%, #c9a227 50%, #886600 100%)';
     } else if (level < 0.9) {
       this.detectionText.textContent = 'WARNING';
       this.detectionText.style.color = '#ff8800';
-      this.detectionBar.style.background = 'linear-gradient(90deg, #ffaa00, #ff4400)';
+      this.detectionBar.style.background = 'linear-gradient(180deg, #ffaa00 0%, #ff8800 50%, #aa4400 100%)';
     } else {
       this.detectionText.textContent = 'DETECTED!';
       this.detectionText.style.color = '#ff0000';
-      this.detectionBar.style.background = 'linear-gradient(90deg, #ff4400, #ff0000)';
+      this.detectionBar.style.background = 'linear-gradient(180deg, #ff4444 0%, #ff0000 50%, #aa0000 100%)';
     }
   }
   
@@ -513,11 +539,11 @@ export class HUD {
     
     // Change color based on stamina
     if (percentage < 20) {
-      this.staminaBar.style.background = '#ff0000';
+      this.staminaBar.style.background = 'linear-gradient(180deg, #ff4444 0%, #ff0000 50%, #aa0000 100%)';
     } else if (percentage < 50) {
-      this.staminaBar.style.background = 'linear-gradient(90deg, #ff8800, #c9a227)';
+      this.staminaBar.style.background = 'linear-gradient(180deg, #ffaa00 0%, #ff8800 50%, #aa4400 100%)';
     } else {
-      this.staminaBar.style.background = 'linear-gradient(90deg, #c9a227, #ffd700)';
+      this.staminaBar.style.background = 'linear-gradient(180deg, #ffff00 0%, #c9a227 50%, #886600 100%)';
     }
   }
   
@@ -529,6 +555,10 @@ export class HUD {
     // Warning color when time is low
     if (seconds < 30) {
       this.timerElement.style.color = '#ff0000';
+      this.timerElement.style.animation = 'blink 0.5s step-end infinite';
+    } else {
+      this.timerElement.style.color = '#00ff00';
+      this.timerElement.style.animation = 'none';
     }
   }
   

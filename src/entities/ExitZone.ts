@@ -38,10 +38,8 @@ export class ExitZone {
     const group = this.mesh;
     
     // Exit door frame (larger than normal doors)
-    const frameMaterial = new THREE.MeshStandardMaterial({
-      color: 0xc9a227,  // Gold
-      metalness: 0.8,
-      roughness: 0.2
+    const frameMaterial = new THREE.MeshLambertMaterial({
+      color: 0xffd700,  // Bright Gold
     });
     
     // Frame

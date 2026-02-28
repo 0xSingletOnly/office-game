@@ -55,9 +55,8 @@ export class Door extends InteractiveObject {
     const group = this.mesh as THREE.Group;
     
     // Door frame
-    const frameMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x4a4a4a,
-      roughness: 0.7 
+    const frameMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0x6a6a6a,
     });
     
     // Frame sides
@@ -113,9 +112,8 @@ export class Door extends InteractiveObject {
   }
 
   private createStandardDoor(): void {
-    const doorMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x8b4513,  // Wood color
-      roughness: 0.6 
+    const doorMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0xcc8855,  // Lighter wood color
     });
     
     // Main door panel
@@ -128,10 +126,8 @@ export class Door extends InteractiveObject {
     this.doorMesh.add(panel);
     
     // Door handle
-    const handleMat = new THREE.MeshStandardMaterial({ 
-      color: 0xffd700,
-      metalness: 0.8,
-      roughness: 0.2 
+    const handleMat = new THREE.MeshLambertMaterial({ 
+      color: 0xffee44,
     });
     const handle = new THREE.Mesh(
       new THREE.SphereGeometry(0.05),
@@ -141,7 +137,7 @@ export class Door extends InteractiveObject {
     this.doorMesh.add(handle);
     
     // Decorative panels (6 rectangles)
-    const panelMat = new THREE.MeshStandardMaterial({ color: 0x6b350b });
+    const panelMat = new THREE.MeshLambertMaterial({ color: 0x8b5520 });
     for (let row = 0; row < 3; row++) {
       for (let col = 0; col < 2; col++) {
         const decorPanel = new THREE.Mesh(
@@ -160,10 +156,8 @@ export class Door extends InteractiveObject {
 
   private createGlassDoor(): void {
     // Frame
-    const frameMat = new THREE.MeshStandardMaterial({ 
-      color: 0x333333,
-      metalness: 0.5,
-      roughness: 0.5 
+    const frameMat = new THREE.MeshLambertMaterial({ 
+      color: 0x555555,
     });
     
     // Top and bottom frames
@@ -196,14 +190,11 @@ export class Door extends InteractiveObject {
     rightFrame.position.set(this.width - 0.025, this.height/2, 0);
     this.doorMesh.add(rightFrame);
     
-    // Glass
-    const glassMat = new THREE.MeshPhysicalMaterial({ 
-      color: 0x88ccff,
-      metalness: 0,
-      roughness: 0,
-      transmission: 0.9,
+    // Glass (simplified for PS1 style)
+    const glassMat = new THREE.MeshLambertMaterial({ 
+      color: 0xccddff,
       transparent: true,
-      opacity: 0.3
+      opacity: 0.4
     });
     const glass = new THREE.Mesh(
       new THREE.BoxGeometry(this.width - 0.1, this.height - 0.2, 0.02),
@@ -223,10 +214,8 @@ export class Door extends InteractiveObject {
 
   private createSlidingDoor(): void {
     // Similar to standard but slides instead of rotates
-    const doorMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x666666,
-      metalness: 0.6,
-      roughness: 0.4 
+    const doorMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0x888888,
     });
     
     const panel = new THREE.Mesh(
@@ -238,7 +227,7 @@ export class Door extends InteractiveObject {
     this.doorMesh.add(panel);
     
     // Track
-    const trackMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+    const trackMat = new THREE.MeshLambertMaterial({ color: 0x555555 });
     const topTrack = new THREE.Mesh(
       new THREE.BoxGeometry(this.width * 2, 0.1, 0.1),
       trackMat

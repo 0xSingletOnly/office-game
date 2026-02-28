@@ -3,18 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Pearson Hardman Escape</title>
+  <title>PEARSON HARDMAN ESCAPE [PSX]</title>
+  
+  <!-- Retro pixel font -->
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet">
+  
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
     }
     
     body {
       overflow: hidden;
       background: #0a0a0a;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'VT323', monospace;
     }
     
     #game-container {
@@ -23,6 +30,56 @@
       left: 0;
       width: 100vw;
       height: 100vh;
+    }
+    
+    /* Subtle CRT overlay effect - reduced for comfort */
+    #game-container::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0, 0, 0, 0.08) 50%
+      ),
+      linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.02),
+        rgba(0, 255, 0, 0.01),
+        rgba(0, 0, 255, 0.02)
+      );
+      background-size: 100% 2px, 3px 100%;
+      pointer-events: none;
+      z-index: 50;
+      /* Disabled flicker animation to reduce nausea */
+    }
+    
+    /* Subtle scanlines - reduced opacity */
+    #game-container::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.06),
+        rgba(0, 0, 0, 0.06) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+      z-index: 51;
+    }
+    
+    /* Optional: slower, subtler flicker if desired */
+    @keyframes flicker {
+      0% { opacity: 0.99; }
+      50% { opacity: 1; }
+      100% { opacity: 0.995; }
     }
     
     #ui-layer {
@@ -40,54 +97,96 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.85);
-      color: white;
+      background: rgba(0, 0, 0, 0.95);
+      color: #00ff00;
       padding: 40px 60px;
-      border-radius: 8px;
       text-align: center;
       pointer-events: auto;
-      border: 2px solid #c9a227;
+      border: 4px solid #00ff00;
+      box-shadow: 
+        0 0 0 4px #000,
+        0 0 20px rgba(0, 255, 0, 0.5),
+        inset 0 0 20px rgba(0, 255, 0, 0.1);
+      image-rendering: pixelated;
     }
     
     .pointer-lock-instruction h1 {
       margin-bottom: 20px;
-      color: #c9a227;
-      font-size: 2.5rem;
+      color: #00ff00;
+      font-size: 3rem;
+      font-family: 'Press Start 2P', cursive;
+      text-shadow: 2px 2px 0 #003300;
+      letter-spacing: 2px;
+      animation: blink 1s step-end infinite;
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
     
     .pointer-lock-instruction p {
-      margin: 10px 0;
-      font-size: 1.1rem;
+      margin: 12px 0;
+      font-size: 1.4rem;
+      color: #aaffaa;
+      text-shadow: 1px 1px 0 #000;
     }
     
     .pointer-lock-instruction .key {
-      background: #333;
+      display: inline-block;
+      background: #1a1a1a;
+      border: 2px solid #444;
       padding: 4px 12px;
-      border-radius: 4px;
-      font-family: monospace;
-      color: #c9a227;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.8rem;
+      color: #ffff00;
+      margin: 0 2px;
+      box-shadow: 0 2px 0 #000;
     }
     
     .pointer-lock-instruction button {
       margin-top: 30px;
       padding: 15px 40px;
       font-size: 1.2rem;
-      background: #c9a227;
+      font-family: 'Press Start 2P', cursive;
+      background: #00aa00;
       color: #000;
       border: none;
-      border-radius: 4px;
       cursor: pointer;
-      font-weight: bold;
-      transition: all 0.2s;
+      text-transform: uppercase;
+      box-shadow: 
+        0 4px 0 #006600,
+        0 0 20px rgba(0, 255, 0, 0.4);
+      transition: all 0.1s;
     }
     
     .pointer-lock-instruction button:hover {
-      background: #e0b83a;
-      transform: scale(1.05);
+      background: #00ff00;
+      transform: translateY(2px);
+      box-shadow: 
+        0 2px 0 #006600,
+        0 0 30px rgba(0, 255, 0, 0.6);
+    }
+    
+    .pointer-lock-instruction button:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #006600;
     }
     
     .hidden {
       display: none !important;
+    }
+    
+    /* PSX memory card / slot indicator style */
+    .psx-branding {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: #666;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.5rem;
+      letter-spacing: 2px;
+      z-index: 200;
     }
   </style>
 </head>
@@ -96,16 +195,17 @@
   
   <div id="ui-layer">
     <div id="pointer-lock-ui" class="pointer-lock-instruction">
-      <h1>🏢 PEARSON HARDMAN ESCAPE</h1>
-      <p>You are <strong>Mike Ross</strong>. Louis is hunting you for a drug test.</p>
+      <h1>▶ PEARSON HARDMAN</h1>
+      <p>You are <strong>MIKE ROSS</strong>. Louis is hunting you for a drug test.</p>
       <p>Survive for 3 minutes or reach the exit without getting caught!</p>
       <br>
       <p><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> to Move</p>
       <p><span class="key">SHIFT</span> to Sprint</p>
       <p><span class="key">E</span> to Interact / Hide</p>
       <p>Mouse to Look Around</p>
-      <button id="start-btn">CLICK TO START</button>
+      <button id="start-btn">► START GAME</button>
     </div>
+    <div class="psx-branding">PLAYSTATION™ · BLOCK 1</div>
   </div>
   
   <script type="module" src="/src/main.ts"></script>

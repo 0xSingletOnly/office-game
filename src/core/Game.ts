@@ -8,10 +8,12 @@ import { LouisAI } from '../entities/LouisAI.js';
 import { HUD } from '../ui/HUD.js';
 import { InteractiveObject } from '../entities/InteractiveObject.js';
 import { ExitZone } from '../entities/ExitZone.js';
+import { PS1Renderer } from './PS1Renderer.js';
 
 export class Game {
   private container: HTMLElement | null = null;
   private renderer: THREE.WebGLRenderer | null = null;
+  private ps1Renderer: PS1Renderer | null = null;
   private scene: THREE.Scene | null = null;
   private clock: THREE.Clock = new THREE.Clock();
   
@@ -55,18 +57,27 @@ export class Game {
     this.pointerLockUI = document.getElementById('pointer-lock-ui');
     this.startBtn = document.getElementById('start-btn');
     
-    // Initialize renderer
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Initialize renderer with PS1 settings (no antialias for retro feel)
+    this.renderer = new THREE.WebGLRenderer({ antialias: false });
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // Force pixel ratio to 1 for consistent pixelation
+    this.renderer.setPixelRatio(1);
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Use basic shadow map for sharper, more retro shadows
+    this.renderer.shadowMap.type = THREE.BasicShadowMap;
     this.container.appendChild(this.renderer.domElement);
     
-    // Initialize scene
+    // Initialize PS1 post-processing renderer
+    // pixelScale: 1.5 = subtle pixelation (retro feel without nausea)
+    // colorDepth: 48 = more color gradations for smoother look
+    // vertexSnap: 2 = minimal vertex snapping
+    this.ps1Renderer = new PS1Renderer(this.renderer, 1.5, 48, true, 2);
+    
+    // Initialize scene with PS1-style colors - bright for visibility
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x1a1a2e);
-    this.scene.fog = new THREE.Fog(0x1a1a2e, 10, 50);
+    this.scene.background = new THREE.Color(0x2a2a4a);
+    // Light fog for atmosphere without darkness
+    this.scene.fog = new THREE.Fog(0x2a2a4a, 20, 60);
     
     // Initialize game systems
     this.inputManager = new InputManager();
@@ -330,7 +341,12 @@ export class Game {
   private render(): void {
     if (!this.renderer || !this.scene || !this.cameraController) return;
     
-    this.renderer.render(this.scene, this.cameraController.getCamera());
+    // Use PS1 renderer for retro effect
+    if (this.ps1Renderer) {
+      this.ps1Renderer.render(this.scene, this.cameraController.getCamera());
+    } else {
+      this.renderer.render(this.scene, this.cameraController.getCamera());
+    }
   }
   
   private onWindowResize(): void {
@@ -340,6 +356,7 @@ export class Game {
     const height = window.innerHeight;
     
     this.renderer.setSize(width, height);
+    this.ps1Renderer?.onWindowResize(width, height);
     this.cameraController.onWindowResize(width, height);
   }
   
@@ -355,6 +372,7 @@ export class Game {
   
   public dispose(): void {
     this.stop();
+    this.ps1Renderer?.dispose();
     this.renderer?.dispose();
     this.inputManager?.dispose();
     

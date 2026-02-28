@@ -76,10 +76,9 @@ export class DistractionObject extends InteractiveObject {
     const group = this.mesh as THREE.Group;
     
     // Cup
-    const cupGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.15, 16);
-    const cupMat = new THREE.MeshStandardMaterial({ 
+    const cupGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.15, 12);
+    const cupMat = new THREE.MeshLambertMaterial({ 
       color: 0xffffff,
-      roughness: 0.3
     });
     const cup = new THREE.Mesh(cupGeo, cupMat);
     cup.position.y = 0.075;
@@ -87,8 +86,8 @@ export class DistractionObject extends InteractiveObject {
     group.add(cup);
     
     // Handle
-    const handleGeo = new THREE.TorusGeometry(0.04, 0.01, 8, 16, Math.PI);
-    const handleMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+    const handleGeo = new THREE.TorusGeometry(0.04, 0.01, 6, 12, Math.PI);
+    const handleMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
     const handle = new THREE.Mesh(handleGeo, handleMat);
     handle.position.set(0.08, 0.08, 0);
     handle.rotation.z = -Math.PI / 2;
@@ -109,9 +108,8 @@ export class DistractionObject extends InteractiveObject {
     const group = this.mesh as THREE.Group;
     
     // Cover
-    const coverMat = new THREE.MeshStandardMaterial({ 
-      color: [0x8b0000, 0x006400, 0x00008b, 0x654321][Math.floor(Math.random() * 4)],
-      roughness: 0.7
+    const coverMat = new THREE.MeshLambertMaterial({ 
+      color: [0xcc3333, 0x33aa33, 0x3333cc, 0x8b6b43][Math.floor(Math.random() * 4)],
     });
     
     const bookGeo = new THREE.BoxGeometry(0.3, 0.05, 0.4);
@@ -122,7 +120,7 @@ export class DistractionObject extends InteractiveObject {
     
     // Pages
     const pagesGeo = new THREE.BoxGeometry(0.28, 0.04, 0.38);
-    const pagesMat = new THREE.MeshStandardMaterial({ color: 0xfff8dc });
+    const pagesMat = new THREE.MeshLambertMaterial({ color: 0xfffff0 });
     const pages = new THREE.Mesh(pagesGeo, pagesMat);
     pages.position.y = 0.025;
     group.add(pages);
@@ -136,10 +134,8 @@ export class DistractionObject extends InteractiveObject {
     
     // Body
     const bodyGeo = new THREE.BoxGeometry(0.08, 0.01, 0.15);
-    const bodyMat = new THREE.MeshStandardMaterial({ 
-      color: 0x111111,
-      metalness: 0.8,
-      roughness: 0.2
+    const bodyMat = new THREE.MeshLambertMaterial({ 
+      color: 0x333333,
     });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.005;
@@ -160,10 +156,8 @@ export class DistractionObject extends InteractiveObject {
   private createStapler(): void {
     const group = this.mesh as THREE.Group;
     
-    const staplerMat = new THREE.MeshStandardMaterial({ 
-      color: 0xcc0000,
-      metalness: 0.3,
-      roughness: 0.4
+    const staplerMat = new THREE.MeshLambertMaterial({ 
+      color: 0xff3333,
     });
     
     const bodyGeo = new THREE.BoxGeometry(0.15, 0.06, 0.08);
@@ -180,9 +174,8 @@ export class DistractionObject extends InteractiveObject {
     const group = this.mesh as THREE.Group;
     
     // Multiple paper sheets
-    const paperMat = new THREE.MeshStandardMaterial({ 
+    const paperMat = new THREE.MeshLambertMaterial({ 
       color: 0xffffff,
-      roughness: 0.9
     });
     
     for (let i = 0; i < 5; i++) {

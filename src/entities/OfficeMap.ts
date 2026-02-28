@@ -17,10 +17,11 @@ export class OfficeMap {
   private interactiveObjects: InteractiveObject[] = [];
   private furniture: THREE.Group[] = [];
   
-  // Materials
-  private floorMaterial: THREE.MeshStandardMaterial;
-  private wallMaterial: THREE.MeshStandardMaterial;
-  private furnitureMaterial: THREE.MeshStandardMaterial;
+  // Materials (using Lambert for PS1 flat shading look)
+  private floorMaterial: THREE.MeshLambertMaterial;
+  private wallMaterial: THREE.MeshLambertMaterial;
+  private ceilingMaterial: THREE.MeshLambertMaterial;
+  private furnitureMaterial: THREE.MeshLambertMaterial;
   
   // Reference to game (for creating interactive objects)
   private game: Game | null = null;
@@ -33,27 +34,28 @@ export class OfficeMap {
     this.game = game || null;
     this.collisionSystem = collisionSystem || new CollisionSystem();
     
-    // Initialize materials
-    this.floorMaterial = new THREE.MeshStandardMaterial({
-      color: 0x3d2314,  // Dark mahogany
-      roughness: 0.3,
-      metalness: 0.1
+    // Initialize materials - PS1 style (flat shading, no specular)
+    this.floorMaterial = new THREE.MeshLambertMaterial({
+      color: 0xD3B683,  // Light tan/beige floor
     });
     
-    this.wallMaterial = new THREE.MeshStandardMaterial({
-      color: 0xf5f5dc,  // Cream/off-white
-      roughness: 0.8
+    this.wallMaterial = new THREE.MeshLambertMaterial({
+      color: 0xf5f5e0,  // Bright cream walls
     });
     
-    this.furnitureMaterial = new THREE.MeshStandardMaterial({
-      color: 0x1a1a1a,  // Dark furniture
-      roughness: 0.5
+    this.ceilingMaterial = new THREE.MeshLambertMaterial({
+      color: 0xD1CDCA,  // Light grey/off-white ceiling
+    });
+    
+    this.furnitureMaterial = new THREE.MeshLambertMaterial({
+      color: 0x4a4a4a,  // Lighter dark furniture for visibility
     });
   }
   
   build(): void {
     this.createLighting();
     this.createFloor();
+    this.createCeiling();
     this.createWalls();
     this.createFurniture();
     this.createDecorations();
@@ -137,12 +139,12 @@ export class OfficeMap {
   }
   
   private createLighting(): void {
-    // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    // Ambient light - bright for good visibility
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     this.scene.add(ambientLight);
     
     // Main directional light (sunlight from windows)
-    const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.3);
     sunLight.position.set(10, 20, 10);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
@@ -165,16 +167,14 @@ export class OfficeMap {
     ];
     
     for (const pos of lightPositions) {
-      const pointLight = new THREE.PointLight(0xfffaed, 0.5, 15);
+      const pointLight = new THREE.PointLight(0xfffaed, 1.0, 25);
       pointLight.position.set(pos.x, 8, pos.z);
       this.scene.add(pointLight);
       
       // Light fixture (visual only)
       const fixtureGeometry = new THREE.BoxGeometry(1, 0.1, 1);
-      const fixtureMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xeeeeee,
-        emissive: 0xfffaed,
-        emissiveIntensity: 0.2
+      const fixtureMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xffffcc,
       });
       const fixture = new THREE.Mesh(fixtureGeometry, fixtureMaterial);
       fixture.position.set(pos.x, 7.9, pos.z);
@@ -191,11 +191,21 @@ export class OfficeMap {
     this.scene.add(this.floor);
     
     // Add floor tiles pattern (grid)
-    const gridHelper = new THREE.GridHelper(40, 20, 0x2a1a0e, 0x2a1a0e);
+    const gridHelper = new THREE.GridHelper(40, 20, 0x8b7355, 0x8b7355);
     gridHelper.position.y = 0.01;
     gridHelper.material.opacity = 0.3;
     gridHelper.material.transparent = true;
     this.scene.add(gridHelper);
+  }
+  
+  private createCeiling(): void {
+    // Main ceiling
+    const ceilingGeometry = new THREE.PlaneGeometry(40, 40);
+    const ceiling = new THREE.Mesh(ceilingGeometry, this.ceilingMaterial);
+    ceiling.rotation.x = Math.PI / 2; // Face down
+    ceiling.position.y = 8; // Ceiling height
+    ceiling.receiveShadow = true;
+    this.scene.add(ceiling);
   }
   
   private createWalls(): void {
@@ -277,7 +287,7 @@ export class OfficeMap {
     
     // Legs
     const legGeometry = new THREE.BoxGeometry(0.1, 1, 0.1);
-    const legMaterial = new THREE.MeshStandardMaterial({ color: 0x666666 });
+    const legMaterial = new THREE.MeshLambertMaterial({ color: 0x777777 });
     
     const legPositions = [
       { x: -0.9, z: -0.4 },
@@ -295,16 +305,16 @@ export class OfficeMap {
     
     // Computer monitor
     const monitorGeometry = new THREE.BoxGeometry(0.4, 0.3, 0.05);
-    const monitorMaterial = new THREE.MeshStandardMaterial({ color: 0x111111 });
+    const monitorMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
     const monitor = new THREE.Mesh(monitorGeometry, monitorMaterial);
     monitor.position.set(0, 1.35, -0.3);
     monitor.castShadow = true;
     group.add(monitor);
     
-    // Screen glow
+    // Screen glow - PS1 style bright blue
     const screenGeometry = new THREE.PlaneGeometry(0.35, 0.25);
     const screenMaterial = new THREE.MeshBasicMaterial({ 
-      color: 0x4a90d9,
+      color: 0x88bbff,
       side: THREE.DoubleSide
     });
     const screen = new THREE.Mesh(screenGeometry, screenMaterial);
@@ -333,7 +343,7 @@ export class OfficeMap {
     group.add(table);
     
     // Chairs around table
-    const chairMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+    const chairMaterial = new THREE.MeshLambertMaterial({ color: 0xcc8855 });
     const chairGeometry = new THREE.BoxGeometry(0.6, 0.1, 0.6);
     const backGeometry = new THREE.BoxGeometry(0.6, 0.8, 0.1);
     
@@ -374,7 +384,7 @@ export class OfficeMap {
     group.position.set(x, 0, z);
     group.rotation.y = rotation;
     
-    const shelfMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3728 });
+    const shelfMaterial = new THREE.MeshLambertMaterial({ color: 0x6b5038 });
     
     // Frame
     const frameGeometry = new THREE.BoxGeometry(3, 3, 0.5);
@@ -384,13 +394,13 @@ export class OfficeMap {
     group.add(frame);
     
     // Books (simple colored boxes)
-    const bookColors = [0x8b0000, 0x006400, 0x00008b, 0x8b008b, 0x654321];
+    const bookColors = [0xcc3333, 0x33aa33, 0x3333cc, 0xaa33aa, 0x8b6b43];
     
     for (let i = 0; i < 3; i++) {
       const y = 0.5 + i * 0.9;
       for (let j = 0; j < 8; j++) {
         const bookGeometry = new THREE.BoxGeometry(0.2, 0.7, 0.4);
-        const bookMaterial = new THREE.MeshStandardMaterial({ 
+        const bookMaterial = new THREE.MeshLambertMaterial({ 
           color: bookColors[Math.floor(Math.random() * bookColors.length)] 
         });
         const book = new THREE.Mesh(bookGeometry, bookMaterial);
@@ -415,11 +425,11 @@ export class OfficeMap {
     const group = new THREE.Group();
     group.position.set(x, 0, z);
     
-    const machineMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-    const glassMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x111111,
+    const machineMaterial = new THREE.MeshLambertMaterial({ color: 0xcccccc });
+    const glassMaterial = new THREE.MeshLambertMaterial({ 
+      color: 0x222222,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.7
     });
     
     // Main body
@@ -442,7 +452,7 @@ export class OfficeMap {
     // Control panel
     const panel = new THREE.Mesh(
       new THREE.BoxGeometry(0.8, 0.4, 0.05),
-      new THREE.MeshStandardMaterial({ color: 0x222222 })
+      new THREE.MeshLambertMaterial({ color: 0x444444 })
     );
     panel.position.set(0, 1.3, 0.76);
     group.add(panel);
@@ -461,7 +471,7 @@ export class OfficeMap {
     
     const signBg = new THREE.Mesh(
       new THREE.BoxGeometry(4, 1, 0.1),
-      new THREE.MeshStandardMaterial({ color: 0x1a1a1a })
+      new THREE.MeshLambertMaterial({ color: 0x3a3a3a })
     );
     signBg.castShadow = true;
     signGroup.add(signBg);
@@ -482,7 +492,7 @@ export class OfficeMap {
     
     // Pot
     const potGeometry = new THREE.CylinderGeometry(0.4, 0.3, 0.6, 8);
-    const potMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+    const potMaterial = new THREE.MeshLambertMaterial({ color: 0xb87333 });
     const pot = new THREE.Mesh(potGeometry, potMaterial);
     pot.position.y = 0.3;
     pot.castShadow = true;
@@ -490,7 +500,7 @@ export class OfficeMap {
     
     // Plant (simple green sphere for now)
     const plantGeometry = new THREE.SphereGeometry(0.5, 8, 8);
-    const plantMaterial = new THREE.MeshStandardMaterial({ color: 0x228b22 });
+    const plantMaterial = new THREE.MeshLambertMaterial({ color: 0x44aa44 });
     const plant = new THREE.Mesh(plantGeometry, plantMaterial);
     plant.position.y = 0.9;
     plant.castShadow = true;
